@@ -166,6 +166,8 @@ class AccountMove(models.Model):
             parser = etree.XMLParser(ns_clean=True, recover=True, encoding='utf-8')
             h = fromstring(cfdi_data, parser=parser)
             cfdi_node = fromstring(cfdi_data)
+        if not cfdi_node:
+            cfdi_node = fromstring(cfdi_data)
         tfd_node = get_node(
             cfdi_node,
             'tfd:TimbreFiscalDigital[1]',
