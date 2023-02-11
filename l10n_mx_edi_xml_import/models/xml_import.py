@@ -81,7 +81,7 @@ class XmlImportWizard(models.TransientModel):
         no cancelada
         de la compañia 
         """
-        company_id = self.env.user.company_id
+        company_id = self.env.company.id
         
         domain = {}
         if self.invoice_type=='out_invoice':
@@ -122,6 +122,8 @@ class XmlImportWizard(models.TransientModel):
         try:
             uuid, rfc_emisor, rfc_receptor, total = obj_xml['uuid'], obj_xml['rfc_emisor'], obj_xml['rfc_receptor'], obj_xml['total']
             #-------------
+            rfc_emisor = rfc_emisor.replace('&','&amp;')
+            rfc_receptor = rfc_receptor.replace('&','&amp;')
             bodyx = body.format(rfc_emisor, rfc_receptor, total, uuid)
             result = requests.post(url=url, headers=headers, data=bodyx)
             res = xmltodict.parse(result.text)
@@ -161,7 +163,9 @@ class XmlImportWizard(models.TransientModel):
                 bills = self.get_xml_from_zip(zip_file)
             else:
                 bills = self.get_xml_data(raw_file)
+            _logger.info("\n######### BILLS: %s" % bills)
         for bill in bills:
+            _logger.info("\n######### bill: %s" % bill)
             #try:
             invoice, invoice_line, version = self.prepare_invoice_data(bill)
             #except:
@@ -188,30 +192,43 @@ class XmlImportWizard(models.TransientModel):
             uuid_name = invoice['uuid']
             if not self.validate_duplicate_invoice(invoice['rfc'], invoice['amount_total'], invoice['date_invoice'], invoice['name']):
                 draft = self.create_bill_draft(invoice, invoice_line, uuid_name)
-                if self.invoice_type == 'out_invoice' or self.invoice_type == 'out_refund':
-                    draft.invoice_payment_term_id = draft.partner_id.property_payment_term_id
-                else:
-                    draft.invoice_payment_term_id = draft.partner_id.property_supplier_payment_term_id
-                if not draft.invoice_payment_term_id:
-                    draft.invoice_date_due = draft.invoice_date
-                if self.import_type == 'regular':
-                    if self.invoice_type == 'in_invoice':
-                        draft.narration = self.description or ''
-                attachment = self.attach_to_invoice(draft, bill['xml_file_data'], bill['filename'], uuid_name)
-                _logger.info("attachment.datas: %s" %  attachment.datas)
-                #draft.l10n_mx_edi_cfdi_name = bill['filename']
-                invoice_ids.append(draft.id)
-                # Agregar info para EDI
-                
-                xedi = edi_obj.create({'name' : uuid_name+'.xml',
-                                       'state' : 'sent',
-                                       'edi_format_name' : edi_cfdi33.name,
-                                       'edi_format_id' : edi_cfdi33.id,
-                                       'attachment_id' : attachment.id,
-                                       'move_id'    : draft.id
-                                      })
-                
 
+                if draft.state == 'draft':
+                    import_l10n_mx_edi_payment_policy  = invoice.get('import_l10n_mx_edi_payment_policy', False)
+                    import_l10n_mx_edi_payment_method_id  = invoice.get('import_l10n_mx_edi_payment_method_id', False)
+
+                    draft.write({
+                                    'import_l10n_mx_edi_payment_policy': import_l10n_mx_edi_payment_policy,
+                                    'import_l10n_mx_edi_payment_method_id': import_l10n_mx_edi_payment_method_id,
+                                })
+
+                    if self.invoice_type == 'out_invoice' or self.invoice_type == 'out_refund':
+                        draft.invoice_payment_term_id = draft.partner_id.property_payment_term_id
+                    else:
+                        draft.invoice_payment_term_id = draft.partner_id.property_supplier_payment_term_id
+                    if not draft.invoice_payment_term_id:
+                        draft.invoice_date_due = draft.invoice_date
+                    if self.import_type == 'regular':
+                        if self.invoice_type == 'in_invoice':
+                            draft.narration = self.description or ''
+
+                    if not draft.edi_document_ids:
+                        attachment = self.attach_to_invoice(draft, bill['xml_file_data'], bill['filename'], uuid_name, bill['file_xml_decode'])
+                        _logger.info("attachment.datas: %s" %  attachment.datas)
+                    #draft.l10n_mx_edi_cfdi_name = bill['filename']
+                    invoice_ids.append(draft.id)
+                    # Agregar info para EDI
+                    if not draft.edi_document_ids:
+                        xedi = edi_obj.create({'name' : uuid_name+'.xml',
+                                               'state' : 'sent',
+                                               'edi_format_name' : edi_cfdi33.name,
+                                               'edi_format_id' : edi_cfdi33.id,
+                                               'attachment_id' : attachment.id,
+                                               'move_id'    : draft.id
+                                              })
+                else:
+                    invoice_ids.append(draft.id)
+                
         return self.action_view_invoices(invoice_ids)
 
     def action_view_invoices(self, invoice_ids):
@@ -219,6 +236,12 @@ class XmlImportWizard(models.TransientModel):
         _logger.info("\n###### invoice_ids: %s" % invoice_ids)
         if not invoice_ids:
             return False
+
+        for inv in self.env['account.move'].browse(invoice_ids):
+            if self.user_id:
+                inv.user_id = self.user_id.id
+                inv.invoice_user_id = self.user_id.id
+
         if self.invoice_type == 'out_invoice':
             ### Rertorno de la información ###
             if len(invoice_ids) > 1:
@@ -269,7 +292,7 @@ class XmlImportWizard(models.TransientModel):
                         }
             else:
                 return {
-                            'name': _('Factura Global'),
+                            'name': _('Factura'),
                             'view_mode': 'form',
                             'view_id': self.env.ref('account.view_move_form').id,
                             'res_model': 'account.move',
@@ -331,8 +354,11 @@ class XmlImportWizard(models.TransientModel):
         xml_file_data = base64.encodestring(file)
         bill = {'filename':self.filename, 
          'xml':xml, 
-         'xml_file_data':xml_file_data}
+         'xml_file_data':xml_file_data,
+         'file_xml_decode': file.decode('utf-8'),
+         }
         xmls.append(bill)
+        # raise UserError("!")
         return xmls
 
     def get_file_ext(self, filename):
@@ -343,7 +369,7 @@ class XmlImportWizard(models.TransientModel):
         """
         file_ext = filename.split('.')
         if len(file_ext) > 1:
-            file_ext = filename.split('.')[1]
+            file_ext = filename.split('.')[-1]
             return file_ext
         else:
             return False
@@ -357,15 +383,18 @@ class XmlImportWizard(models.TransientModel):
         xmls = []
         for fileinfo in zip_file.infolist():
             file_ext = self.get_file_ext(fileinfo.filename)
+            _logger.info("\n######### fileinfo: %s" % fileinfo)
+            _logger.info("\n######### file_ext: %s" % file_ext)
             if file_ext in ('xml', 'XML'):
                 xml = xmltodict.parse(zip_file.read(fileinfo).decode('utf-8'))
                 xml_file_data = zip_file.read(fileinfo)
-                
-                _logger.info("\nxml_file_data: %s" % xml_file_data)
+                _logger.info("\n############ xml_file_data: %s" % xml_file_data)
                 #xml_file_data = base64.encodestring(zip_file.read(fileinfo))
                 bill = {'filename':fileinfo.filename, 
-                 'xml':xml, 
-                 'xml_file_data':xml_file_data}
+                         'xml':xml, 
+                         'xml_file_data':xml_file_data,
+                         'file_xml_decode': zip_file.read(fileinfo).decode('utf-8'),
+                        }
                 xmls.append(bill)
 
         return xmls
@@ -441,7 +470,7 @@ class XmlImportWizard(models.TransientModel):
 
         return bills
 
-    def get_tax_ids(self, tax_group, version='3.3'):
+    def get_tax_ids(self, tax_group, version='4.0'):
         """
         obtiene los ids de los impuestos
         a partir de nombres de grupos de impuestos
@@ -471,7 +500,7 @@ class XmlImportWizard(models.TransientModel):
                 if len(tax_data) == 4:
                     tax_factor = tax_data[3]
                     domain.append(('l10n_mx_tax_type', '=', tax_factor))
-                if version == '3.3':
+                if version in ('3.3','4.0'):
                     if tax_factor != 'Exento':
                         tax_rate = float(tax_data[1])
                         if tax_type == 'tras':
@@ -489,12 +518,12 @@ class XmlImportWizard(models.TransientModel):
                             rate = -tax_rate
                         domain.append(('amount', '=', rate))
                     domain.append(('name', 'ilike', tax_number))
-                _logger.info("\ntax domain: %s" % domain)
+                _logger.info("\n\n##### tax domain: %s" % domain)
                 tax_id = AccountTax.search(domain)
                 if tax_id:
                     tax_id = tax_id[0].id
                     tax_ids.append(tax_id)
-
+        _logger.info("\n\n##### tax_ids: %s" % tax_ids)
         if tax_ids:
             return [
              (
@@ -502,7 +531,26 @@ class XmlImportWizard(models.TransientModel):
         else:
             return False
 
-    def attach_to_invoice(self, invoice, xml, xml_name, uuid_file=False):
+    # def zip_b64_str_to_physical_file(self, b64_str, file_extension, prefix='data'):
+    #     _logger.info("\n####################### zip_b64_str_to_physical_file >>>>>>>>>>> ")
+    #     _logger.info("\n####################### file_extension %s " % file_extension)
+    #     _logger.info("\n####################### prefix %s " % prefix)
+    #     certificate_lib = self.env['facturae.certificate.library']
+    #     b64_temporal_route = certificate_lib.b64str_to_tempfile(base64.encodestring(b''), 
+    #                                                       file_suffix='.%s' % file_extension, 
+    #                                                       file_prefix='odoo__%s__' % prefix)
+    #     _logger.info("\n### b64_temporal_route %s " % b64_temporal_route)
+    #     ### Guardando la Cadena Original ###
+    #     f = open(b64_temporal_route, 'wb')
+    #     f.write(base64.b64decode(b64_str))
+    #     f.close()
+
+    #     file_result = open(b64_temporal_route, 'rb').read()
+        
+    #     return file_result, b64_temporal_route
+
+
+    def attach_to_invoice(self, invoice, xml, xml_name, uuid_file=False, file_xml_decode=""):
         """
         adjunta xml a factura
         """
@@ -515,13 +563,14 @@ class XmlImportWizard(models.TransientModel):
 
         #### Escribimos el resultado en el Archivo Temporal ####
         f_write = open(fname, 'w')
-        f_write.write(xml.decode("utf-8"))
+        f_write.write(file_xml_decode)
         f_write.close()
 
         #### Convertimos el archivo a base64 ####
         f_read = open(fname, "rb")
         fdata = f_read.read()
-        out_b64 = base64.encodebytes(fdata)
+        out_b64 = fdata
+        # out_b64 = base64.encodebytes(fdata)
         if not '.xml' in xml_name:
             xml_name = xml_name+'.xml'
         vals = {
@@ -529,8 +578,8 @@ class XmlImportWizard(models.TransientModel):
             'res_id'    : invoice.id, 
             'name'      : uuid_file+'.xml' if uuid_file else xml_name, 
             #'datas'       : base64.encodebytes(str.encode(xml)),
-            'datas'     : out_b64,
-            #'datas'     : base64.encodebytes(xml),
+            #'datas'     : out_b64,
+            'datas'     : base64.encodebytes(str.encode(file_xml_decode)),
             'type'      : 'binary',
             'store_fname': xml_name,
         }
@@ -560,18 +609,42 @@ class XmlImportWizard(models.TransientModel):
             vendor2 = root['cfdi:Receptor']
         partner['rfc'] = vendor.get('@Rfc') or vendor.get('@rfc')
         invoice['rfc'] = vendor.get('@Rfc') or vendor.get('@rfc')
+
+        ### Cambios ###
+        metodopago = root.get('@MetodoPago') or root.get('@metodopago')
+        formadepago = root.get('@FormaPago') or root.get('@formadepago')
+        
+        ### Cherman ###
+
+        serie = root.get('@Serie') or root.get('@serie')
+        folio = root.get('@Folio') or root.get('@folio')
+        if not serie:
+            serie = ""
+        if not folio:
+            folio = ""
+            
+        if metodopago:
+            invoice['import_l10n_mx_edi_payment_policy'] = metodopago
+        if formadepago:
+            import_l10n_mx_edi_payment_method_id = self.env['l10n_mx_edi.payment.method'].search([('code','=',formadepago)], limit=1)
+            if import_l10n_mx_edi_payment_method_id:
+                invoice['import_l10n_mx_edi_payment_method_id'] = import_l10n_mx_edi_payment_method_id.id
+        ###############
+
         invoice['company_rfc'] = vendor2.get('@Rfc') or vendor2.get('@rfc')
         partner['name'] = vendor.get('@Nombre', False) or vendor.get('@nombre', 'PARTNER GENERICO: REVISAR')
         partner['position_id'] = vendor.get('@RegimenFiscal')
+        partner['l10n_mx_edi_fiscal_regime'] = vendor.get('@RegimenFiscalReceptor')
+
         partner_rec = self.get_partner_or_create(partner)
         default_account = partner_rec.default_xml_import_account and partner_rec.default_xml_import_account.id or False
         partner_id = partner_rec.id
         if self.import_type == 'start_amount':
-            if version == '3.3':
+            if version in ('3.3','4.0'):
                 invoice_line = self.compact_lines(root['cfdi:Conceptos']['cfdi:Concepto'], default_account)
             else:
-                taxes = self.get_cfdi32_taxes(root['cfdi:Impuestos'])
-                invoice_line = self.get_cfdi32(root['cfdi:Conceptos']['cfdi:Concepto'], taxes, default_account)
+                taxes = self.get_cfdi_taxes(root['cfdi:Impuestos'])
+                invoice_line = self.get_cfdi(root['cfdi:Conceptos']['cfdi:Concepto'], taxes, default_account)
         else:
             invoice_line = self.add_products_to_invoice(root['cfdi:Conceptos']['cfdi:Concepto'], default_account)
         tipo_comprobante = root.get('@TipoDeComprobante') or root.get('@tipoDeComprobante')
@@ -587,7 +660,13 @@ class XmlImportWizard(models.TransientModel):
             moneda = 'MXN'
         currency = self.env['res.currency'].search([('name', '=', moneda)])
         folio = root.get('@Folio') or root.get('@folio')
+        if not serie:
+            serie = ""
+        if not folio:
+            folio = ""
         invoice['type'] = corrected_invoice_type or self.invoice_type
+        invoice['narration'] = serie+folio
+        invoice['payment_reference'] = serie+folio
         invoice['name'] = folio
         invoice['amount_untaxed'] = root.get('@SubTotal') or root.get('@subTotal')
         invoice['amount_total'] = root.get('@Total') or root.get('@total')
@@ -598,6 +677,7 @@ class XmlImportWizard(models.TransientModel):
         invoice['journal_id'] = self.journal_id and self.journal_id.id or False
         invoice['team_id'] = self.team_id and self.team_id.id or False
         invoice['user_id'] = self.user_id and self.user_id.id or False
+        invoice['invoice_user_id'] = self.user_id and self.user_id.id or False
         invoice['account_id'] = self.invoice_account_id.id
         uuid = root['cfdi:Complemento']['tfd:TimbreFiscalDigital'].get('@UUID')
         invoice['uuid'] = uuid
@@ -605,7 +685,7 @@ class XmlImportWizard(models.TransientModel):
         return (
          invoice, invoice_line, version)
 
-    def get_cfdi32_taxes(self, taxes):
+    def get_cfdi_taxes(self, taxes):
         tax_group = ''
         if taxes:
             if float(taxes.get('@totalImpuestosTrasladados', 0)) > 0:
@@ -624,7 +704,7 @@ class XmlImportWizard(models.TransientModel):
                         tax_group = tax_group + tax_code + '|' + tax_rate + '|tras,'
         return tax_group
 
-    def get_cfdi32(self, products, taxes, default_account):
+    def get_cfdi(self, products, taxes, default_account):
         if not isinstance(products, list):
             products = [
              products]
@@ -792,6 +872,8 @@ class XmlImportWizard(models.TransientModel):
                 if tax_group:
                     taxes = self.get_tax_ids(tax_group)
                 invoice_line['taxes'] = taxes
+                _logger.info("\n\n##### invoice_line: %s" % invoice_line)
+
             all_products.append(invoice_line)
 
         return all_products
@@ -801,55 +883,62 @@ class XmlImportWizard(models.TransientModel):
             Toma la factura y sus conceptos y los guarda
             en Odoo como borrador.
         """
-        vals = {
-            #'l10n_mx_edi_cfdi_name':invoice['l10n_mx_edi_cfdi_name'], 
-            'l10n_mx_edi_cfdi_name2': uuid_name if uuid_name else invoice['l10n_mx_edi_cfdi_name'], 
-            'journal_id': invoice['journal_id'], 
-            'team_id'   : invoice['team_id'], 
-            'is_imported': True,
-            'user_id'   : invoice['user_id'] or self.env.user.id, 
-            #'account_id':invoice['account_id'], 
-            'invoice_date' : invoice['date_invoice'], 
-            'partner_id':invoice['partner_id'], 
-            #'amount_untaxed':invoice['amount_untaxed'], 
-            #'amount_total':invoice['amount_total'], 
-            'currency_id':invoice['currency_id'], 
-            'move_type':invoice['type'], 
-            'is_start_amount':True if self.import_type == 'start_amount' else False
-        }
-        #if self.invoice_type == 'out_invoice' or self.invoice_type == 'out_refund':
-        #    vals['name'] = invoice['name']
-        #else:
-        vals['ref'] = invoice['name']
-        
-        lines = []
-        for line in invoice_line:
-            uom = False
-            if self.import_type != 'start_amount':
-                uom = self.get_uom(line.get('sat_uom'))
-                if uom:
-                    uom = uom.id
-                else:
-                    uom = False
-            line_data = {
-                'product_id' : line.get('product_id'), 
-                'name'       : line['name'], 
-                'quantity'   : line['quantity'], 
-                'price_unit' : line['price_unit'], 
-                'account_id' : line['account_id'], 
-                'discount'   : line.get('discount') or 0.0, 
-                #'price_subtotal' : line['price_subtotal'], 
-                'tax_ids' : line.get('taxes'), 
-                'product_uom_id'    : uom, 
-                'analytic_tag_ids' : line['analytic_tag_ids'], 
-                'analytic_account_id' : line['account_analytic_id']
+        invoice_id = self.env['account.move'].sudo().search([('l10n_mx_edi_cfdi_name2','=',uuid_name if uuid_name else invoice['l10n_mx_edi_cfdi_name'])], limit=1)
+        if invoice_id:
+            return invoice_id
+        else:
+            vals = {
+                #'l10n_mx_edi_cfdi_name':invoice['l10n_mx_edi_cfdi_name'], 
+                'l10n_mx_edi_cfdi_name2': uuid_name if uuid_name else invoice['l10n_mx_edi_cfdi_name'], 
+                'journal_id': invoice['journal_id'], 
+                'team_id'   : invoice['team_id'], 
+                'is_imported': True,
+                'user_id'   : invoice['user_id'] or self.env.user.id, 
+                #'account_id':invoice['account_id'], 
+                'invoice_date' : invoice['date_invoice'], 
+                'partner_id':invoice['partner_id'], 
+                #'amount_untaxed':invoice['amount_untaxed'], 
+                #'amount_total':invoice['amount_total'], 
+                'currency_id':invoice['currency_id'], 
+                'move_type':invoice['type'], 
+                'is_start_amount':True if self.import_type == 'start_amount' else False,
+                'payment_reference': invoice['payment_reference'],
+                'narration': invoice['payment_reference'],
+
             }
+            #if self.invoice_type == 'out_invoice' or self.invoice_type == 'out_refund':
+            #    vals['name'] = invoice['name']
+            #else:
+            vals['ref'] = invoice['name']
             
-            lines.append((0,0,line_data))
-        vals['invoice_line_ids'] = lines
-        draft = self.env['account.move'].create(vals)
+            lines = []
+            for line in invoice_line:
+                uom = False
+                if self.import_type != 'start_amount':
+                    uom = self.get_uom(line.get('sat_uom'))
+                    if uom:
+                        uom = uom.id
+                    else:
+                        uom = False
+                line_data = {
+                    'product_id' : line.get('product_id'), 
+                    'name'       : line['name'], 
+                    'quantity'   : line['quantity'], 
+                    'price_unit' : line['price_unit'], 
+                    'account_id' : line['account_id'], 
+                    'discount'   : line.get('discount') or 0.0, 
+                    #'price_subtotal' : line['price_subtotal'], 
+                    'tax_ids' : line.get('taxes'), 
+                    'product_uom_id'    : uom, 
+                    'analytic_tag_ids' : line['analytic_tag_ids'], 
+                    'analytic_account_id' : line['account_analytic_id']
+                }
+                
+                lines.append((0,0,line_data))
+            vals['invoice_line_ids'] = lines
+            draft = self.env['account.move'].create(vals)
         
-        return draft
+            return draft
 
     def get_payment_term_line(self, days):
         """
@@ -867,9 +956,11 @@ class XmlImportWizard(models.TransientModel):
 
     def get_partner_or_create(self, partner):
         """Obtener ID de un partner (proveedor). Si no existe, lo crea."""
+        partner_rfc = partner['rfc']
+        partner_rfc = partner_rfc.replace('&amp;','&')
         search_domain = [
          (
-          'vat', '=', partner['rfc'])]
+          'vat', '=', partner_rfc)]
         if self.invoice_type == 'out_invoice' or self.invoice_type == 'out_refund':
             search_domain.append(('customer_rank', '!=', 0))
         else:
@@ -902,7 +993,7 @@ class XmlImportWizard(models.TransientModel):
                 payment_term_id = self.payment_term_id
                 vals = {
                     'name'  : partner['name'], 
-                    'vat'   : partner['rfc'], 
+                    'vat'   : partner_rfc, 
                     #'property_account_position_id':fiscal_position_id
                 }
                 if self.invoice_type == 'out_invoice' or self.invoice_type == 'out_refund':
@@ -947,11 +1038,16 @@ class XmlImportWizard(models.TransientModel):
                         return p.id
                 if self.create_product:
                     EdiCode = self.env['product.unspsc.code']
+                    product_product_fields = self.env['product.product']._fields
+                    product_template_fields = self.env['product.template']._fields
                     product_vals = {
                         'name'  : product['name'],
                         'price' : product['price_unit'], 
                         'default_code' : product['product_ref'], 
-                        'detailed_type':'product'}
+                        }
+                    if 'detailed_type' in product_product_fields or 'product_product_fields' in product_template_fields:
+                        product_vals['detailed_type'] = 'product'
+
                     sat_code = EdiCode.search([('applies_to','=','product'),
                                                ('code', '=', product['sat_product_ref'])], limit=1)
                     if sat_code:
@@ -960,7 +1056,14 @@ class XmlImportWizard(models.TransientModel):
                     if uom:
                         product_vals['uom_id'] = uom.id
                         product_vals['uom_po_id'] = uom.id
-                    p = self.env['product.product'].create(product_vals)
+                    try:
+                        p = self.env['product.product'].create(product_vals)
+                    except:
+                        product_vals['detailed_type'] = 'service'
+                        product_vals['type'] = 'service'
+                        p = self.env['product.product'].create(product_vals)
+                    _logger.info("\n############## P: %s" % p)
+                    _logger.info("\n############## P Company: %s" % p.company_id)
                     return p.id or False
                 return False
             else:
@@ -970,11 +1073,15 @@ class XmlImportWizard(models.TransientModel):
                     p = self.env['product.product'].search([
                      ('unspsc_code_id', '=', edi_sat_code_id.id)], limit=1)
                     if p:
+                        _logger.info("\n############## P: %s" % p)
+                        _logger.info("\n############## P Company: %s" % p.company_id)
                         return p.id
                     else:
                         p = self.env['product.template.unspsc.multi'].search([
                             ('unspsc_code_id', '=', edi_sat_code_id.id)], limit=1)
                         if p:
+                            _logger.info("\n############## P: %s" % p)
+                            _logger.info("\n############## P Company: %s" % p.company_id)
                             return p.product_template_id.product_variant_id.id
                 return False        
         else:

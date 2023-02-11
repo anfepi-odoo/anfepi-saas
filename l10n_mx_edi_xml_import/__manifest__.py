@@ -23,6 +23,7 @@
         'base_address_extended',
         'base_address_city',
         'l10n_mx_edi',
+        'l10n_mx_edi_40',
         ],
 
     'data': [
