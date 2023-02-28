@@ -126,6 +126,7 @@ class CleanData(models.TransientModel):
         aml = "account_move_line"
         am = "account_move"
         ap = "account_payment"
+        aptx = "account_fiscal_position_tax"
         at = "account_tax"
         absl = "account_bank_statement_line"
         abs = "account_bank_statement"
@@ -134,6 +135,7 @@ class CleanData(models.TransientModel):
         atm = "account_transfer_model"
         aj = "account_journal"
         coa = "account_account"
+        self.check_and_delete(aptx)
         self.check_and_delete(aml)
         self.check_and_delete(am)
         self.check_and_delete(ap)
