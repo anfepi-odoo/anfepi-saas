@@ -6,6 +6,9 @@ from odoo import models, fields, api, _
 from lxml import etree
 import json
 
+import logging
+_logger = logging.getLogger(__name__)
+
 class CleanData(models.TransientModel):
     _name = 'clean.data'
     _description = 'Clean Data'
@@ -27,6 +30,7 @@ class CleanData(models.TransientModel):
     company_id = fields.Many2one('res.company', 'Empresa', required=True)
 
     def check_and_delete(self,table):
+        _logger.info("\n######### BORRANDO LA TABLA ..................................  %s" % table)
         sql = """SELECT EXISTS (
         SELECT 1 FROM information_schema.tables 
         WHERE table_schema = 'public' 
@@ -42,6 +46,7 @@ class CleanData(models.TransientModel):
                 self._cr.execute(sql)
             
     def _clear_so_order(self):
+        _logger.info("\n######### _clear_so_order ------------------------------------->  ")
         sq = "stock_quant"
         sml = "stock_move_line"
         sm = "stock_move"
@@ -64,6 +69,7 @@ class CleanData(models.TransientModel):
         self.check_and_delete(so)
 
     def _clear_po(self):
+        _logger.info("\n######### _clear_po ------------------------------------->  ")
         sq = "stock_quant"
         sml = "stock_move_line"
         sm = "stock_move"
@@ -86,6 +92,7 @@ class CleanData(models.TransientModel):
         self.check_and_delete(po)
 
     def _clear_transfer(self):
+        _logger.info("\n######### _clear_transfer ------------------------------------->  ")
         sp = "stock_picking"
         sml = "stock_move_line"
         sm = "stock_move"
@@ -96,6 +103,7 @@ class CleanData(models.TransientModel):
         self.check_and_delete(sp)
 
     def _clear_inv_pymt(self):
+        _logger.info("\n######### _clear_inv_pymt ------------------------------------->  ")
         apr = "account_partial_reconcile"
         apregister = "account_payment_register"
         aml = "account_move_line"
@@ -108,11 +116,13 @@ class CleanData(models.TransientModel):
         self.check_and_delete(ap)
 
     def _clear_cus_ven(self):
+        _logger.info("\n######### _clear_cus_ven ------------------------------------->  ")
         rp = "delete from res_partner where id not in (select partner_id from res_users union select " \
              "partner_id from res_company); "
         self._cr.execute(rp)
 
     def _clear_coa(self):
+        _logger.info("\n######### _clear_coa ------------------------------------->  ")
         aml = "account_move_line"
         am = "account_move"
         ap = "account_payment"
@@ -137,12 +147,14 @@ class CleanData(models.TransientModel):
         self.check_and_delete(coa)
 
     def _clear_journal(self):
+        _logger.info("\n######### _clear_journal ------------------------------------->  ")
         aml = "account_move_line"
         am = "account_move"
         self.check_and_delete(aml)
         self.check_and_delete(am)
 
     def _clear_project(self):
+        _logger.info("\n######### _clear_project ------------------------------------->  ")
         ptsp = "project_task_stage_personal"
         ps = "project_project_stage"
         pt = "project_tags"
@@ -161,22 +173,26 @@ class CleanData(models.TransientModel):
         self.check_and_delete(analytic_line)
 
     def _clear_project_task(self):
+        _logger.info("\n######### _clear_project_task ------------------------------------->  ")
         task = "project_task"
         analytic_line = "account_analytic_line"
         self.check_and_delete(task)
         self.check_and_delete(analytic_line)
 
     def _clear_project_timesheet(self):
+        _logger.info("\n######### _clear_project_timesheet ------------------------------------->  ")
         analytic_line = "account_analytic_line"
         self.check_and_delete(analytic_line)
 
     def _clear_mrp_order(self):
+        _logger.info("\n######### _clear_mrp_order ------------------------------------->  ")
         mrp_workorder = "mrp_workorder"
         mrp_production = "mrp_production"
         self.check_and_delete(mrp_workorder)
         self.check_and_delete(mrp_production)
 
     def _clear_bom_mrp_order(self):
+        _logger.info("\n######### _clear_bom_mrp_order ------------------------------------->  ")
         mrp_workorder = "mrp_workorder"
         mrp_production = "mrp_production"
         mrp_bom = "mrp_bom"
