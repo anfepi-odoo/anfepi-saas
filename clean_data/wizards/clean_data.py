@@ -29,6 +29,8 @@ class CleanData(models.TransientModel):
     bom_mrp = fields.Boolean('BOM & Manufacturing Orders')
     company_id = fields.Many2one('res.company', 'Empresa', required=True)
 
+
+
     def check_and_delete(self,table):
         _logger.info("\n######### BORRANDO LA TABLA ..................................  %s" % table)
         sql = """SELECT EXISTS (
@@ -41,6 +43,21 @@ class CleanData(models.TransientModel):
         if res.get('exists', False):
             if table == 'account_payment':
                 sql = """ delete from account_payment join account_move on account_move.id = account_payment.move_id where account_move.company_id=%s;""" % self.company_id.id
+                self._cr.execute(sql)
+            elif table == 'account_transfer_model_line':
+                sql = """ delete from account_transfer_model_line 
+                                 join account_transfer_model 
+                                   on account_transfer_model.id = account_transfer_model_line.transfer_model_id 
+                                 join account_journal 
+                                   on account_journal.id = account_transfer_model.journal_id
+                          where account_journal.company_id=%s;""" % self.company_id.id
+                self._cr.execute(sql)
+            elif table == 'account_transfer_model':
+                sql = """ delete from account_transfer_model 
+                                 join account_journal 
+                                   on account_journal.id = account_transfer_model.journal_id
+                          where account_journal.company_id=%s;""" % self.company_id.id
+                self._cr.execute(sql)
             else:
                 sql = """delete from %s where company_id=%s;""" % (table, self.company_id.id)
                 self._cr.execute(sql)
