@@ -82,40 +82,48 @@ class CleanData(models.TransientModel):
 
     def check_and_delete(self,table):
         _logger.info("\n######### BORRANDO LA TABLA ..................................  %s" % table)
-        sql = """SELECT EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND   table_name = '%s');""" % table
-        self._cr.execute(sql)
-        res = self._cr.dictfetchall()
-        res = res and res[0] or {}
-        if res.get('exists', False):
-            if table == 'account_payment':
-                sql = """ delete from account_payment where id in (select account_payment.id from account_payment join account_move on account_move.id = account_payment.move_id where account_move.company_id=%s);""" % self.company_id.id
+        if table == 'stock_quant':
+            try:
+                sql = """delete from stock_quant 
+                               where company_id=%s;""" % self.company_id.id
                 self._cr.execute(sql)
-            elif table == 'account_transfer_model_line':
-                sql = """ delete from account_transfer_model_line where id in (select account_transfer_model_line.id from account_transfer_model_line 
-                                 join account_transfer_model 
-                                   on account_transfer_model.id = account_transfer_model_line.transfer_model_id 
-                                 join account_journal 
-                                   on account_journal.id = account_transfer_model.journal_id
-                          where account_journal.company_id=%s);""" % self.company_id.id
-                self._cr.execute(sql)
-            elif table == 'account_transfer_model':
-                sql = """ delete from account_transfer_model where id in (select account_transfer_model.id from account_transfer_model 
-                                 join account_journal 
-                                   on account_journal.id = account_transfer_model.journal_id
-                          where account_journal.company_id=%s);""" % self.company_id.id
-                self._cr.execute(sql)
-            elif table == 'purchase_order':
-                sql = """delete from purchase_order where company_id=%s;""" % self.company_id.id
-                self._cr.execute(sql)
-            elif table == 'project_project_stage':
-                sql = """delete from purchase_order where company_id=%s;""" % self.company_id.id
-                self._cr.execute(sql)
-            else:
-                sql = """delete from %s where company_id=%s;""" % (table, self.company_id.id)
-                self._cr.execute(sql)
+            except:
+                _logger.info("\n No se pudo borrar la tabla: stock_quant")
+        else:
+            sql = """SELECT EXISTS (
+            SELECT 1 FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND   table_name = '%s');""" % table
+            self._cr.execute(sql)
+            res = self._cr.dictfetchall()
+            res = res and res[0] or {}
+            if res.get('exists', False):
+                if table == 'account_payment':
+                    sql = """ delete from account_payment where id in (select account_payment.id from account_payment join account_move on account_move.id = account_payment.move_id where account_move.company_id=%s);""" % self.company_id.id
+                    self._cr.execute(sql)
+                elif table == 'account_transfer_model_line':
+                    sql = """ delete from account_transfer_model_line where id in (select account_transfer_model_line.id from account_transfer_model_line 
+                                     join account_transfer_model 
+                                       on account_transfer_model.id = account_transfer_model_line.transfer_model_id 
+                                     join account_journal 
+                                       on account_journal.id = account_transfer_model.journal_id
+                              where account_journal.company_id=%s);""" % self.company_id.id
+                    self._cr.execute(sql)
+                elif table == 'account_transfer_model':
+                    sql = """ delete from account_transfer_model where id in (select account_transfer_model.id from account_transfer_model 
+                                     join account_journal 
+                                       on account_journal.id = account_transfer_model.journal_id
+                              where account_journal.company_id=%s);""" % self.company_id.id
+                    self._cr.execute(sql)
+                elif table == 'purchase_order':
+                    sql = """delete from purchase_order where company_id=%s;""" % self.company_id.id
+                    self._cr.execute(sql)
+                elif table == 'project_project_stage':
+                    sql = """delete from purchase_order where company_id=%s;""" % self.company_id.id
+                    self._cr.execute(sql)
+                else:
+                    sql = """delete from %s where company_id=%s;""" % (table, self.company_id.id)
+                    self._cr.execute(sql)
             
     def _clear_so_order(self):
         _logger.info("\n######### _clear_so_order ------------------------------------->  ")
