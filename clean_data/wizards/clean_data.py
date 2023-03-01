@@ -89,6 +89,34 @@ class CleanData(models.TransientModel):
                 self._cr.execute(sql)
             except:
                 _logger.info("\n No se pudo borrar la tabla: stock_quant")
+        elif table == 'stock_move_line':
+            try:
+                sql = """delete from stock_move_line 
+                               where company_id=%s;""" % self.company_id.id
+                self._cr.execute(sql)
+            except:
+                _logger.info("\n No se pudo borrar la tabla: stock_move_line")
+        elif table == 'stock_move':
+            try:
+                sql = """delete from stock_move 
+                               where company_id=%s;""" % self.company_id.id
+                self._cr.execute(sql)
+            except:
+                _logger.info("\n No se pudo borrar la tabla: stock_move")
+        elif table == 'stock_picking_type':
+            try:
+                sql = """delete from stock_picking_type 
+                               where company_id=%s;""" % self.company_id.id
+                self._cr.execute(sql)
+            except:
+                _logger.info("\n No se pudo borrar la tabla: stock_picking_type")
+        elif table == 'stock_picking':
+            try:
+                sql = """delete from stock_picking 
+                               where company_id=%s;""" % self.company_id.id
+                self._cr.execute(sql)
+            except:
+                _logger.info("\n No se pudo borrar la tabla: stock_picking")
         else:
             sql = """SELECT EXISTS (
             SELECT 1 FROM information_schema.tables 
