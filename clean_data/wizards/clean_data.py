@@ -110,6 +110,9 @@ class CleanData(models.TransientModel):
             elif table == 'purchase_order':
                 sql = """delete from purchase_order where company_id=%s;""" % self.company_id.id
                 self._cr.execute(sql)
+            elif table == 'project_project_stage':
+                sql = """delete from purchase_order where company_id=%s;""" % self.company_id.id
+                self._cr.execute(sql)
             else:
                 sql = """delete from %s where company_id=%s;""" % (table, self.company_id.id)
                 self._cr.execute(sql)
@@ -227,8 +230,8 @@ class CleanData(models.TransientModel):
     def _clear_project(self):
         _logger.info("\n######### _clear_project ------------------------------------->  ")
         ptsp = "project_task_stage_personal"
-        ps = "project_project_stage"
-        pt = "project_tags"
+        # ps = "project_project_stage"
+        # pt = "project_tags"
         project = "project_project"
         task = "project_task"
         # milestone = "project_milestone"
@@ -239,7 +242,7 @@ class CleanData(models.TransientModel):
         # self.check_and_delete(milestone)
         # self.check_and_delete(update)
         self.check_and_delete(project)
-        self.check_and_delete(ps)
+        # self.check_and_delete(ps)
         self.check_and_delete(task)
         self.check_and_delete(analytic_line)
 
