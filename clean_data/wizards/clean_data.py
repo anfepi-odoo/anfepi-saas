@@ -35,18 +35,26 @@ class CleanData(models.TransientModel):
                 where debit_move_id in (select id from account_move_line 
                     where move_id in (select account_move.id from account_move where company_id=%s ));""" % self.company_id.id
             self._cr.execute(sql)
-
+        except:
+            _logger.info("\n No se pudo borrar la tabla: account_move_line")
+        
+        try:
             sql = """delete from account_partial_reconcile where credit_move_id in (select id from account_move_line 
                 where move_id in (select account_move.id from account_move where company_id=%s )); """ % self.company_id.id
             self._cr.execute(sql)
-
+        except:
+            _logger.info("\n No se pudo borrar la tabla: account_move_line")
+        
+        try:
             sql = """delete from account_move_line where move_id in (select account_move.id from account_move 
                  where company_id=%s );""" % self.company_id.id
             self._cr.execute(sql)
-
+        except:
+            _logger.info("\n No se pudo borrar la tabla: account_move_line")
+            
+        try:
             sql = """delete from account_move where id in (select account_move.id from account_move 
                  where company_id=%s );""" % self.company_id.id
-
             self._cr.execute(sql)
         except:
             _logger.info("\n No se pudo borrar la tabla: account_move_line")
