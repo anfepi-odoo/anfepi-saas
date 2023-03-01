@@ -31,7 +31,7 @@ class CleanData(models.TransientModel):
 
     def clean_base_data(self,):
         try:
-            sql = """delete from mail_activity where user_id in (select id from res_users where company_id=%s);""" % self.company_id.id
+            sql = """delete from mail_activity where user_id in (select id from res_users where company_id=%s) and id not in (1,2);""" % self.company_id.id
             self._cr.execute(sql)
         except:
             _logger.info("\n No se pudo borrar la tabla: mail_activity")
@@ -190,7 +190,7 @@ class CleanData(models.TransientModel):
     def _clear_cus_ven(self):
         _logger.info("\n######### _clear_cus_ven ------------------------------------->  ")
         rp = "delete from res_partner where id not in (select partner_id from res_users union select " \
-             "partner_id from res_company) where company_id=%s; " % self.company_id.id
+             "partner_id from res_company) and company_id=%s; " % self.company_id.id
         self._cr.execute(rp)
 
     def _clear_coa(self):
