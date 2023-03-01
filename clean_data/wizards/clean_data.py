@@ -231,13 +231,13 @@ class CleanData(models.TransientModel):
         pt = "project_tags"
         project = "project_project"
         task = "project_task"
-        milestone = "project_milestone"
-        update = "project_update"
+        # milestone = "project_milestone"
+        # update = "project_update"
         analytic_line = "account_analytic_line"
         self.check_and_delete(ptsp)
-        self.check_and_delete(pt)
-        self.check_and_delete(milestone)
-        self.check_and_delete(update)
+        # self.check_and_delete(pt)
+        # self.check_and_delete(milestone)
+        # self.check_and_delete(update)
         self.check_and_delete(project)
         self.check_and_delete(ps)
         self.check_and_delete(task)
