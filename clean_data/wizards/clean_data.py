@@ -193,6 +193,43 @@ class CleanData(models.TransientModel):
              "partner_id from res_company) and company_id=%s; " % self.company_id.id
         self._cr.execute(rp)
 
+        try:
+            sql = """delete from account_fiscal_position where company_id=%s""" % self.company_id.id
+            self._cr.execute(sql)
+        except:
+            _logger.info("\n No se pudo borrar la tabla: account_fiscal_position")
+
+        try:
+            sql = """delete from purchase_requisition where company_id=%s""" % self.company_id.id
+            self._cr.execute(sql)
+        except:
+            _logger.info("\n No se pudo borrar la tabla: purchase_requisition")
+
+        try:
+            sql = """delete from stock_rule where company_id=%s""" % self.company_id.id
+            self._cr.execute(sql)
+        except:
+            _logger.info("\n No se pudo borrar la tabla: stock_rule")
+
+        try:
+            sql = """delete from stock_picking_type where company_id=%s""" % self.company_id.id
+            self._cr.execute(sql)
+        except:
+            _logger.info("\n No se pudo borrar la tabla: stock_picking_type")
+
+        try:
+            sql = """delete from stock_valuation_layer where company_id=%s""" % self.company_id.id
+            self._cr.execute(sql)
+        except:
+            _logger.info("\n No se pudo borrar la tabla: stock_valuation_layer")
+
+        try:
+            sql = """delete from stock_warehouse where company_id=%s""" % self.company_id.id
+            self._cr.execute(sql)
+        except:
+            _logger.info("\n No se pudo borrar la tabla: stock_warehouse")
+
+
     def _clear_coa(self):
         _logger.info("\n######### _clear_coa ------------------------------------->  ")
         aml = "account_move_line"
