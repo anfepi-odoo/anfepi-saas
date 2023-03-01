@@ -229,6 +229,24 @@ class CleanData(models.TransientModel):
         except:
             _logger.info("\n No se pudo borrar la tabla: stock_warehouse")
 
+        try:
+            sql = """delete from account_followup_followup_line where company_id=%s""" % self.company_id.id
+            self._cr.execute(sql)
+        except:
+            _logger.info("\n No se pudo borrar la tabla: account_followup_followup_line")
+
+        try:
+            sql = """delete from account_reconcile_model where company_id=%s""" % self.company_id.id
+            self._cr.execute(sql)
+        except:
+            _logger.info("\n No se pudo borrar la tabla: account_reconcile_model")
+
+        try:
+            sql = """delete from ir_property where company_id=%s""" % self.company_id.id
+            self._cr.execute(sql)
+        except:
+            _logger.info("\n No se pudo borrar la tabla: ir_property")
+
 
     def _clear_coa(self):
         _logger.info("\n######### _clear_coa ------------------------------------->  ")
