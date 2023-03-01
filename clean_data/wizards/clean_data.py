@@ -34,19 +34,19 @@ class CleanData(models.TransientModel):
             sql = """delete from mail_activity where user_id in (select id from res_users where company_id=%s) and id not in (1,2);""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: mail_activity")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: mail_activity")
 
         try:
             sql = """delete from res_users where company_id=%s""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: res_users")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: res_users")
 
         # try:
         #     sql = """delete from res_partner where company_id=4 and id not in (select res_company.partner_id from res_company);""" % self.company_id.id
         #     self._cr.execute(sql)
         # except:
-        #     _logger.info("\n No se pudo borrar la tabla: res_partner")
+        #     _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: res_partner")
 
         try:
             sql = """delete from account_partial_reconcile 
@@ -54,28 +54,28 @@ class CleanData(models.TransientModel):
                     where move_id in (select account_move.id from account_move where company_id=%s ));""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: account_partial_reconcile")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: account_partial_reconcile")
         
         try:
             sql = """delete from account_partial_reconcile where credit_move_id in (select id from account_move_line 
                 where move_id in (select account_move.id from account_move where company_id=%s )); """ % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: account_partial_reconcile")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: account_partial_reconcile")
         
         try:
             sql = """delete from account_move_line where move_id in (select account_move.id from account_move 
                  where company_id=%s );""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: account_move_line")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: account_move_line")
 
         try:
             sql = """delete from account_move where id in (select account_move.id from account_move 
                  where company_id=%s );""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: account_move")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: account_move")
 
 
 
@@ -88,35 +88,35 @@ class CleanData(models.TransientModel):
                                where company_id=%s;""" % self.company_id.id
                 self._cr.execute(sql)
             except:
-                _logger.info("\n No se pudo borrar la tabla: stock_quant")
+                _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: stock_quant")
         elif table == 'stock_move_line':
             try:
                 sql = """delete from stock_move_line 
                                where company_id=%s;""" % self.company_id.id
                 self._cr.execute(sql)
             except:
-                _logger.info("\n No se pudo borrar la tabla: stock_move_line")
+                _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: stock_move_line")
         elif table == 'stock_move':
             try:
                 sql = """delete from stock_move 
                                where company_id=%s;""" % self.company_id.id
                 self._cr.execute(sql)
             except:
-                _logger.info("\n No se pudo borrar la tabla: stock_move")
+                _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: stock_move")
         elif table == 'stock_picking_type':
             try:
                 sql = """delete from stock_picking_type 
                                where company_id=%s;""" % self.company_id.id
                 self._cr.execute(sql)
             except:
-                _logger.info("\n No se pudo borrar la tabla: stock_picking_type")
+                _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: stock_picking_type")
         elif table == 'stock_picking':
             try:
                 sql = """delete from stock_picking 
                                where company_id=%s;""" % self.company_id.id
                 self._cr.execute(sql)
             except:
-                _logger.info("\n No se pudo borrar la tabla: stock_picking")
+                _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: stock_picking")
         else:
             # sql = """SELECT EXISTS (
             # SELECT 1 FROM information_schema.tables 
@@ -154,7 +154,7 @@ class CleanData(models.TransientModel):
                     sql = """delete from %s where company_id=%s;""" % (table, self.company_id.id)
                     self._cr.execute(sql)
             except:
-                _logger.info("\n No se pudo borrar la tabla: %s" % table)
+                _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: %s" % table)
             
     def _clear_so_order(self):
         _logger.info("\n######### _clear_so_order ------------------------------------->  ")
@@ -236,55 +236,55 @@ class CleanData(models.TransientModel):
             sql = """delete from account_fiscal_position where company_id=%s""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: account_fiscal_position")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: account_fiscal_position")
 
         try:
             sql = """delete from purchase_requisition where company_id=%s""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: purchase_requisition")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: purchase_requisition")
 
         try:
             sql = """delete from stock_rule where company_id=%s""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: stock_rule")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: stock_rule")
 
         try:
             sql = """delete from stock_picking_type where company_id=%s""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: stock_picking_type")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: stock_picking_type")
 
         try:
             sql = """delete from stock_valuation_layer where company_id=%s""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: stock_valuation_layer")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: stock_valuation_layer")
 
         try:
             sql = """delete from stock_warehouse where company_id=%s""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: stock_warehouse")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: stock_warehouse")
 
         try:
             sql = """delete from account_followup_followup_line where company_id=%s""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: account_followup_followup_line")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: account_followup_followup_line")
 
         try:
             sql = """delete from account_reconcile_model where company_id=%s""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: account_reconcile_model")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: account_reconcile_model")
 
         try:
             sql = """delete from ir_property where company_id=%s""" % self.company_id.id
             self._cr.execute(sql)
         except:
-            _logger.info("\n No se pudo borrar la tabla: ir_property")
+            _logger.info("\n XXXXXXXXXXXXXXXX No se pudo borrar la tabla: ir_property")
 
 
     def _clear_coa(self):
