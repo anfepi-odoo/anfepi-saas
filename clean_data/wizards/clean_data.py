@@ -29,6 +29,29 @@ class CleanData(models.TransientModel):
     bom_mrp = fields.Boolean('BOM & Manufacturing Orders')
     company_id = fields.Many2one('res.company', 'Empresa', required=True)
 
+    def clean_base_data(self,):
+        try:
+            sql = """delete from account_partial_reconcile 
+                where debit_move_id in (select id from account_move_line 
+                    where move_id in (select account_move.id from account_move where company_id=%s ));""" % self.company_id.id
+            self._cr.execute(sql)
+
+            sql = """delete from account_partial_reconcile where credit_move_id in (select id from account_move_line 
+                where move_id in (select account_move.id from account_move where company_id=%s )); """ % self.company_id.id
+            self._cr.execute(sql)
+
+            sql = """delete from account_move_line where move_id in (select account_move.id from account_move 
+                 where company_id=%s );""" % self.company_id.id
+            self._cr.execute(sql)
+
+            sql = """delete from account_move where id in (select account_move.id from account_move 
+                 where company_id=%s );""" % self.company_id.id
+
+            self._cr.execute(sql)
+        except:
+            _logger.info("\n No se pudo borrar la tabla: account_move_line")
+
+
 
 
     def check_and_delete(self,table):
@@ -57,6 +80,12 @@ class CleanData(models.TransientModel):
                                  join account_journal 
                                    on account_journal.id = account_transfer_model.journal_id
                           where account_journal.company_id=%s);""" % self.company_id.id
+                self._cr.execute(sql)
+            elif table == 'purchase_order':
+                sql = """ delete from account_move_line where commercial_partner_id in (select res_partner.id from res_partner where company_id=%s);""" % self.company_id.id
+                sql = """ delete from account_move where commercial_partner_id in (select res_partner.id from res_partner where company_id=%s);""" % self.company_id.id
+                self._cr.execute(sql)
+                sql = """ delete from res_partner where  company_id=%s;""" % self.company_id.id
                 self._cr.execute(sql)
             else:
                 sql = """delete from %s where company_id=%s;""" % (table, self.company_id.id)
@@ -254,6 +283,7 @@ class CleanData(models.TransientModel):
     def clean_data(self):
         for rec in self:
             if rec.all_data:
+                self.clean_base_data()
                 self._clear_so_order()
                 self._clear_po()
                 self._clear_transfer()
