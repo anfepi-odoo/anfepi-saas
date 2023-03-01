@@ -118,14 +118,15 @@ class CleanData(models.TransientModel):
             except:
                 _logger.info("\n No se pudo borrar la tabla: stock_picking")
         else:
-            sql = """SELECT EXISTS (
-            SELECT 1 FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            AND   table_name = '%s');""" % table
-            self._cr.execute(sql)
-            res = self._cr.dictfetchall()
-            res = res and res[0] or {}
-            if res.get('exists', False):
+            # sql = """SELECT EXISTS (
+            # SELECT 1 FROM information_schema.tables 
+            # WHERE table_schema = 'public' 
+            # AND   table_name = '%s');""" % table
+            # self._cr.execute(sql)
+            # res = self._cr.dictfetchall()
+            # res = res and res[0] or {}
+            # if res.get('exists', False):
+            try:
                 if table == 'account_payment':
                     sql = """ delete from account_payment where id in (select account_payment.id from account_payment join account_move on account_move.id = account_payment.move_id where account_move.company_id=%s);""" % self.company_id.id
                     self._cr.execute(sql)
@@ -152,6 +153,8 @@ class CleanData(models.TransientModel):
                 else:
                     sql = """delete from %s where company_id=%s;""" % (table, self.company_id.id)
                     self._cr.execute(sql)
+            except:
+                _logger.info("\n No se pudo borrar la tabla: %s" % table)
             
     def _clear_so_order(self):
         _logger.info("\n######### _clear_so_order ------------------------------------->  ")
