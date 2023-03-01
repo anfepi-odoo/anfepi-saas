@@ -187,7 +187,7 @@ class CleanData(models.TransientModel):
     def _clear_cus_ven(self):
         _logger.info("\n######### _clear_cus_ven ------------------------------------->  ")
         rp = "delete from res_partner where id not in (select partner_id from res_users union select " \
-             "partner_id from res_company); "
+             "partner_id from res_company) where company_id=%s; " % self.company_id.id
         self._cr.execute(rp)
 
     def _clear_coa(self):
@@ -312,12 +312,12 @@ class CleanData(models.TransientModel):
                 self._clear_transfer()
                 self._clear_inv_pymt()
                 self._clear_coa()
-                self._clear_cus_ven()
                 self._clear_project()
                 self._clear_project_task()
                 self._clear_project_timesheet()
                 self._clear_mrp_order()
                 self._clear_bom_mrp_order()
+                self._clear_cus_ven()
                 # self._clear_journal()
             if rec.so_do:
                 self._clear_so_order()
@@ -331,8 +331,6 @@ class CleanData(models.TransientModel):
                 self._clear_journal()
             if rec.coa:
                 self._clear_coa()
-            if rec.cus_ven:
-                self._clear_cus_ven()
             if rec.project:
                 self._clear_project()
             if rec.project_task:
@@ -343,6 +341,8 @@ class CleanData(models.TransientModel):
                 self._clear_mrp_order()
             if rec.bom_mrp:
                 self._clear_bom_mrp_order()
+            if rec.cus_ven:
+                self._clear_cus_ven()
 
     def hide_fields(self,doc, name, modifiers):
         so_do = doc.xpath(name)
