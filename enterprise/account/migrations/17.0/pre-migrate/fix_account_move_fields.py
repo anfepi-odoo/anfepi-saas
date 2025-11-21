@@ -2,7 +2,7 @@ from odoo.upgrade import util
 
 def migrate(cr):
     # =================================================================================
-    # CORRECCIONES PARA TABLA: account_move
+    # CORRECCIONES PARA TABLA: account_move (Errores de columna)
     # =================================================================================
     
     # 1. New stored field: account.move/extract_state (type: varchar, default: 'no_extract_requested')
@@ -31,7 +31,7 @@ def migrate(cr):
     )
     
     # =================================================================================
-    # CORRECCIONES PARA TABLA: account_move_line
+    # CORRECCIONES PARA TABLA: account_move_line (Errores de columna)
     # =================================================================================
 
     # 4. New stored field: account.move.line/extract_state (type: varchar, default: 'no_extract_requested')
@@ -65,7 +65,10 @@ def migrate(cr):
     )
     
     # =================================================================================
-    # CORRECCIÓN FINAL: UserError de Compañías (113.02.01 ISR A Favor)
+    # CORRECCIÓN FINAL DE COMPAÑÍAS (USERERROR 113.02.01)
+    # 1. Actualiza la cuenta a la compañía correcta.
+    # 2. Actualiza las líneas de reparto de impuestos asociadas (repartition lines)
+    #    para evitar el error en la validación de l10n_mx.
     # =================================================================================
 
     # Encuentra el ID de la compañía 'Asesores y Soluciones ANFEPI SC'
@@ -74,7 +77,8 @@ def migrate(cr):
     
     if company_id_target:
         company_id_target = company_id_target[0]
-        # Actualiza la cuenta problemática para que pertenezca a la compañía correcta
+        
+        # 1. ACTUALIZA LA CUENTA PROBLEMA (account_account)
         cr.execute(
             """
             UPDATE account_account
@@ -83,3 +87,26 @@ def migrate(cr):
             """,
             (company_id_target,)
         )
+        
+        # Obtiene el ID de la cuenta recién corregida para usarlo en la siguiente corrección
+        cr.execute(
+            """
+            SELECT id FROM account_account 
+            WHERE code = '113.02.01' AND company_id = %s
+            """, 
+            (company_id_target,)
+        )
+        account_ids = [res[0] for res in cr.fetchall()]
+
+        # 2. ACTUALIZA LAS LÍNEAS DE REPARTO DE IMPUESTOS ASOCIADAS
+        # Si no corregimos las líneas de reparto (repartition lines), Odoo falla al crearlas
+        # porque la cuenta y la línea tienen compañías diferentes.
+        if account_ids:
+            cr.execute(
+                """
+                UPDATE account_tax_repartition_line
+                SET company_id = %s
+                WHERE account_id IN %s
+                """,
+                (company_id_target, tuple(account_ids))
+            )
