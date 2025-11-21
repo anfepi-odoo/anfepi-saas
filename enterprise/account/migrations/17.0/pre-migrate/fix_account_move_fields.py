@@ -121,3 +121,4 @@ def migrate(cr):
                 """,
                 (company_id_target, tuple(account_ids))
             )
+
