@@ -65,10 +65,10 @@ def migrate(cr):
     )
     
     # =================================================================================
-    # CORRECCIÓN FINAL DE COMPAÑÍAS (USERERROR 113.02.01)
-    # 1. Actualiza la cuenta a la compañía correcta.
-    # 2. Actualiza las líneas de reparto de impuestos asociadas (repartition lines)
-    #    para evitar el error en la validación de l10n_mx.
+    # CORRECCIONES DE DATOS: (company_id, ValidationError)
+    # 1. Define company_id_target (debe ser lo primero en esta sección).
+    # 2. Renombra la cuenta 601.84.02 (ValidationError)
+    # 3. Corrige la compañía en la cuenta 113.02.01 y sus tax_repartition_lines (UserError)
     # =================================================================================
 
     # Encuentra el ID de la compañía 'Asesores y Soluciones ANFEPI SC'
@@ -78,7 +78,19 @@ def migrate(cr):
     if company_id_target:
         company_id_target = company_id_target[0]
         
-        # 1. ACTUALIZA LA CUENTA PROBLEMA (account_account)
+        # 1. CORRECCIÓN DE UNICIDAD: Renombrar cuenta 601.84.02 (ValidationError)
+        # Esto libera el código para que la migración de l10n_mx pueda crear la nueva cuenta.
+        cr.execute(
+            """
+            UPDATE account_account
+            SET code = '601.84.02_OLD'
+            WHERE code = '601.84.02' AND company_id = %s
+            """,
+            (company_id_target,)
+        )
+        
+        # 2. CORRECCIÓN DE COMPAÑÍA: Actualiza la cuenta 113.02.01 (UserError)
+        # Esto asegura que la cuenta referenciada tenga la compañía correcta.
         cr.execute(
             """
             UPDATE account_account
@@ -88,7 +100,7 @@ def migrate(cr):
             (company_id_target,)
         )
         
-        # Obtiene el ID de la cuenta recién corregida para usarlo en la siguiente corrección
+        # Obtiene el ID de la cuenta 113.02.01 recién corregida.
         cr.execute(
             """
             SELECT id FROM account_account 
@@ -98,9 +110,8 @@ def migrate(cr):
         )
         account_ids = [res[0] for res in cr.fetchall()]
 
-        # 2. ACTUALIZA LAS LÍNEAS DE REPARTO DE IMPUESTOS ASOCIADAS
-        # Si no corregimos las líneas de reparto (repartition lines), Odoo falla al crearlas
-        # porque la cuenta y la línea tienen compañías diferentes.
+        # 3. CORRECCIÓN DE LÍNEAS DE REPARTO: Actualiza las líneas de impuestos asociadas (113.02.01)
+        # Esto previene el UserError de incompatibilidad de compañía en account.tax.repartition.line.
         if account_ids:
             cr.execute(
                 """
@@ -110,4 +121,3 @@ def migrate(cr):
                 """,
                 (company_id_target, tuple(account_ids))
             )
-            
