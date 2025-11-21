@@ -66,10 +66,19 @@ def migrate(cr):
     
     # =================================================================================
     # CORRECCIONES DE DATOS: (company_id, ValidationError)
-    # 1. Define company_id_target (debe ser lo primero en esta sección).
-    # 2. Renombra la cuenta 601.84.02 (ValidationError)
-    # 3. Corrige la compañía en la cuenta 113.02.01 y sus tax_repartition_lines (UserError)
+    # Estas correcciones se ejecutan ANTES de que Odoo.sh intente cargar el Plan Contable V17
     # =================================================================================
+
+    # 1. CORRECCIÓN GLOBAL DE UNICIDAD: Renombrar cuenta 601.84.02 (ValidationError)
+    # Se renombra sin condición de compañía para asegurar que la migración l10n_mx no falle 
+    # por unicidad al crear la nueva cuenta 601.84.02.
+    cr.execute(
+        """
+        UPDATE account_account
+        SET code = '601.84.02_OLD_GLOBAL'
+        WHERE code = '601.84.02';
+        """
+    )
 
     # Encuentra el ID de la compañía 'Asesores y Soluciones ANFEPI SC'
     cr.execute("SELECT id FROM res_company WHERE name = 'Asesores y Soluciones ANFEPI SC'")
@@ -77,17 +86,6 @@ def migrate(cr):
     
     if company_id_target:
         company_id_target = company_id_target[0]
-        
-        # 1. CORRECCIÓN DE UNICIDAD: Renombrar cuenta 601.84.02 (ValidationError)
-        # Esto libera el código para que la migración de l10n_mx pueda crear la nueva cuenta.
-        cr.execute(
-            """
-            UPDATE account_account
-            SET code = '601.84.02_OLD'
-            WHERE code = '601.84.02' AND company_id = %s
-            """,
-            (company_id_target,)
-        )
         
         # 2. CORRECCIÓN DE COMPAÑÍA: Actualiza la cuenta 113.02.01 (UserError)
         # Esto asegura que la cuenta referenciada tenga la compañía correcta.
@@ -121,5 +119,3 @@ def migrate(cr):
                 """,
                 (company_id_target, tuple(account_ids))
             )
-
-
