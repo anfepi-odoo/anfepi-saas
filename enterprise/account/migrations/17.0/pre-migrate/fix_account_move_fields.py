@@ -92,3 +92,5 @@ def migrate(cr):
         );
         """
     )
+
+
