@@ -66,12 +66,10 @@ def migrate(cr):
     
     # =================================================================================
     # CORRECCIONES DE DATOS: (company_id, ValidationError)
-    # Estas correcciones se ejecutan ANTES de que Odoo.sh intente cargar el Plan Contable V17
     # =================================================================================
 
     # 1. CORRECCIÓN GLOBAL DE UNICIDAD: Renombrar cuenta 601.84.02 (ValidationError)
-    # Se renombra sin condición de compañía para asegurar que la migración l10n_mx no falle 
-    # por unicidad al crear la nueva cuenta 601.84.02.
+    # Se renombra sin condición de compañía (GLOBAL) para forzar la solución antes de la carga de l10n_mx.
     cr.execute(
         """
         UPDATE account_account
