@@ -113,18 +113,27 @@ def _fix_orphan_move_lines(cr, env, account, company):
     Busca líneas de asiento (account.move.line) cuyo account_id ya no
     existe en account_account y las reasigna a la cuenta ISR A Favor.
 
-    Estas líneas quedan cuando se elimina un registro de account_account
-    sin eliminar en cascada las move.lines (dependiendo del motor de BD
-    y la versión de Odoo, la FK puede quedar como NULL o con valor inválido).
+    Odoo 16 tiene una constraint PostgreSQL que exige:
+      display_type NOT IN ('line_section','line_note')
+      OR (account_id IS NULL AND debit=0 AND credit=0 AND amount_currency=0)
+
+    Por eso se filtra siempre por:
+      - COALESCE(display_type,'') NOT IN ('line_section','line_note')
+      - (debit != 0 OR credit != 0 OR amount_currency != 0)
+    para tocar sólo líneas contables con movimiento real.
     """
-    # 1. Líneas con account_id = NULL (el registro fue eliminado y la FK
-    #    quedó en NULL porque la columna lo permite).
+    ACCOUNTING_FILTER = """
+        COALESCE(display_type, '') NOT IN ('line_section', 'line_note')
+        AND (debit != 0 OR credit != 0 OR amount_currency != 0)
+    """
+
+    # 1. Líneas contables con account_id = NULL (FK quedó vacía al borrar la cuenta)
     cr.execute("""
         SELECT COUNT(*)
         FROM account_move_line
         WHERE account_id IS NULL
           AND company_id = %s
-    """, (company.id,))
+          AND """ + ACCOUNTING_FILTER, (company.id,))
     null_count = cr.fetchone()[0]
 
     if null_count:
@@ -133,7 +142,7 @@ def _fix_orphan_move_lines(cr, env, account, company):
             SET account_id = %s
             WHERE account_id IS NULL
               AND company_id = %s
-        """, (account.id, company.id))
+              AND """ + ACCOUNTING_FILTER, (account.id, company.id))
         _logger.warning(
             'anfepi_account_fix: %d línea(s) con account_id NULL reasignada(s) '
             'a la cuenta %s "%s" en la compañía "%s". '
@@ -141,13 +150,13 @@ def _fix_orphan_move_lines(cr, env, account, company):
             null_count, ACCOUNT_CODE, ACCOUNT_NAME, company.name
         )
 
-    # 2. Líneas con account_id apuntando a un id que ya no existe
-    #    (FK sin constraint de BD o constraint deferida).
+    # 2. Líneas contables con account_id apuntando a un id que ya no existe
     cr.execute("""
         SELECT COUNT(*)
         FROM account_move_line aml
         WHERE aml.company_id = %s
           AND aml.account_id IS NOT NULL
+          AND COALESCE(aml.display_type, '') NOT IN ('line_section', 'line_note')
           AND NOT EXISTS (
               SELECT 1 FROM account_account aa WHERE aa.id = aml.account_id
           )
@@ -160,6 +169,7 @@ def _fix_orphan_move_lines(cr, env, account, company):
             SET account_id = %s
             WHERE aml.company_id = %s
               AND aml.account_id IS NOT NULL
+              AND COALESCE(aml.display_type, '') NOT IN ('line_section', 'line_note')
               AND NOT EXISTS (
                   SELECT 1 FROM account_account aa WHERE aa.id = aml.account_id
               )
