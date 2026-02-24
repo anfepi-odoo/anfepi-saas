@@ -47,7 +47,7 @@ def post_init_hook(cr, registry):
         account = _create_or_get_isr_account(env, company)
         if account:
             _fix_orphan_move_lines(cr, env, account, company)
-            _report_unbalanced_moves(cr, env, account, company)
+            _fix_unbalanced_moves(cr, env, account, company)
 
 
 # ---------------------------------------------------------------------------
@@ -190,44 +190,94 @@ def _fix_orphan_move_lines(cr, env, account, company):
 
 
 # ---------------------------------------------------------------------------
-# Reporte de asientos descuadrados
+# Reparación e inserción de líneas faltantes en asientos descuadrados
 # ---------------------------------------------------------------------------
 
-def _report_unbalanced_moves(cr, env, account, company):
+def _fix_unbalanced_moves(cr, env, account, company):
     """
-    Identifica asientos registrados (state=posted) que aún estén
-    descuadrados (suma débitos ≠ suma créditos) y los registra en el log
-    para revisión manual posterior.
+    Detecta asientos registrados (state=posted) cuyos débitos ≠ créditos.
+    Para cada uno inserta una línea compensatoria en la cuenta 113.02.01
+    ISR A Favor directamente vía SQL (sin pasar por el ORM ni el check de
+    balance que bloquearía la operación).
+
+    La diferencia puede ser:
+      diff > 0  → suma de débitos supera créditos → falta línea de CRÉDITO
+      diff < 0  → suma de créditos supera débitos → falta línea de DÉBITO
     """
     cr.execute("""
         SELECT
-            am.name,
-            am.id,
-            am.ref,
+            am.id          AS move_id,
+            am.name        AS move_name,
+            am.ref         AS move_ref,
+            am.date        AS move_date,
+            am.journal_id  AS journal_id,
+            rc.currency_id AS currency_id,
             ROUND(SUM(aml.debit) - SUM(aml.credit), 2) AS diff
         FROM account_move am
         JOIN account_move_line aml ON aml.move_id = am.id
+        JOIN res_company rc ON rc.id = am.company_id
         WHERE am.state = 'posted'
           AND am.company_id = %s
-        GROUP BY am.id, am.name, am.ref
+        GROUP BY am.id, am.name, am.ref, am.date, am.journal_id, rc.currency_id
         HAVING ROUND(ABS(SUM(aml.debit) - SUM(aml.credit)), 2) > 0.01
         ORDER BY am.name
     """, (company.id,))
 
     rows = cr.fetchall()
-    if rows:
-        _logger.error(
-            'anfepi_account_fix: Los siguientes asientos registrados siguen '
-            'DESCUADRADOS en la compañía "%s" y requieren corrección manual:',
-            company.name
-        )
-        for name, move_id, ref, diff in rows:
-            _logger.error(
-                '  → %s (id=%d, ref=%s) | diferencia: %.2f MXN',
-                name, move_id, ref or '', diff
-            )
-    else:
+    if not rows:
         _logger.info(
             'anfepi_account_fix: Todos los asientos registrados están '
             'cuadrados en la compañía "%s".', company.name
         )
+        return
+
+    fixed = 0
+    for move_id, move_name, move_ref, move_date, journal_id, currency_id, diff in rows:
+        # diff = total_debit - total_credit
+        # Si diff < 0 → faltan débitos → insertamos línea con debit = abs(diff)
+        # Si diff > 0 → faltan créditos → insertamos línea con credit = diff
+        abs_diff = abs(diff)
+        debit_val  = abs_diff if diff < 0 else 0.0
+        credit_val = diff     if diff > 0 else 0.0
+        balance_val = round(debit_val - credit_val, 2)
+
+        cr.execute("""
+            INSERT INTO account_move_line (
+                move_id, company_id, account_id, journal_id,
+                date, name,
+                debit, credit, balance,
+                amount_currency, currency_id,
+                parent_state, sequence,
+                display_type
+            ) VALUES (
+                %s, %s, %s, %s,
+                %s, %s,
+                %s, %s, %s,
+                %s, %s,
+                'posted', 999,
+                NULL
+            )
+        """, (
+            move_id, company.id, account.id, journal_id,
+            move_date,
+            'ISR A Favor (restaurado por anfepi_account_fix)',
+            debit_val, credit_val, balance_val,
+            balance_val, currency_id,
+        ))
+
+        _logger.warning(
+            'anfepi_account_fix: Asiento "%s" (id=%d, ref=%s) estaba '
+            'descuadrado (diferencia %.2f MXN). Se insertó línea '
+            'compensatoria en cuenta %s "%s" '
+            '(débito=%.2f, crédito=%.2f).',
+            move_name, move_id, move_ref or '', diff,
+            ACCOUNT_CODE, ACCOUNT_NAME,
+            debit_val, credit_val
+        )
+        fixed += 1
+
+    _logger.warning(
+        'anfepi_account_fix: %d asiento(s) reparado(s) en la compañía "%s". '
+        'REVISAR que los importes y fechas sean correctos.',
+        fixed, company.name
+    )
