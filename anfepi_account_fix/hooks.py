@@ -255,7 +255,7 @@ def _fix_unbalanced_moves(cr, env, account, company):
                 %s, %s, %s,
                 %s, %s,
                 'posted', 999,
-                NULL
+                'product'
             )
         """, (
             move_id, company.id, account.id, journal_id,
