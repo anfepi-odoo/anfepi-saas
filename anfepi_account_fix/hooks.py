@@ -11,14 +11,38 @@ ACCOUNT_TYPE = 'asset_current'
 
 def post_init_hook(env):
     """
-    1. Crea la cuenta contable 113.02.01 ISR A Favor para cada compañía
+    1. Corrige tax_tag_invert=TRUE en líneas con tags DIOT para que el
+       check de migración saas~18.5.1.4/pre-remove-tax-tag-invert.py pase.
+    2. Crea la cuenta contable 113.02.01 ISR A Favor para cada compañía
        que use la localización mexicana y no la tenga definida.
-    2. Reasigna las líneas de asiento (account.move.line) que quedaron
+    3. Reasigna las líneas de asiento (account.move.line) que quedaron
        huérfanas (account_id apuntando a un registro eliminado) a la
        cuenta recién creada.
-    3. Registra en el log los asientos que aún queden descuadrados para
+    4. Registra en el log los asientos que aún queden descuadrados para
        revisión manual.
     """
+    # -----------------------------------------------------------------------
+    # Fix DIOT: tax_tag_invert debe ser FALSE en todas las líneas con tags
+    # DIOT para que el check de migración a 19.0 pase correctamente.
+    # Este fix debe ejecutarse ANTES de que _process_end corra el check.
+    # -----------------------------------------------------------------------
+    env.cr.execute("""
+        UPDATE account_move_line
+        SET tax_tag_invert = FALSE
+        WHERE tax_tag_invert = TRUE
+          AND EXISTS (
+            SELECT 1
+            FROM account_account_tag_account_move_line_rel r
+            JOIN account_account_tag aat ON aat.id = r.account_account_tag_id
+            WHERE r.account_move_line_id = account_move_line.id
+              AND aat.name::text LIKE '%DIOT%'
+          )
+    """)
+    _logger.info(
+        'anfepi_account_fix: DIOT tax_tag_invert fix aplicado (%d filas)',
+        env.cr.rowcount,
+    )
+
     # Buscar compañías que usen la localización mexicana (v17+: chart_template es Char)
     companies = env['res.company'].search([('chart_template', '=', 'mx')])
 
