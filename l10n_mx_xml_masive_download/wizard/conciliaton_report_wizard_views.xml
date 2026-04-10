@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="view_conciliation_report_wizard_form" model="ir.ui.view">
+        <field name="name">conciliation.report.wizard.form</field>
+        <field name="model">conciliation.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reporte de Conciliación SAT vs Odoo">
+                <group>
+                    <group>
+                        <label for="start_date" string="Rango de Fechas"/>
+                        <div class="o_row">
+                            <field name="start_date" widget="date" placeholder="Desde"/>
+                            <span class="mx-2">→</span>
+                            <field name="end_date" widget="date" placeholder="Hasta"/>
+                        </div>
+                    </group>
+                </group>
+                <footer>
+                    <button string="Generar Reporte" type="object" name="action_generate_report" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_open_conciliation_report_wizard" model="ir.actions.act_window">
+        <field name="name">Reporte de Conciliación SAT vs Odoo</field>
+        <field name="res_model">conciliation.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_conciliation_report_wizard_form"/>
+    </record>
+
+</odoo>

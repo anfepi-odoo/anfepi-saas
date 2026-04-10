@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ─── Formulario del Wizard ─────────────────────────────────────────── -->
+    <record id="view_fix_policy_wizard_form" model="ir.ui.view">
+        <field name="name">l10n_mx.fix.policy.wizard.form</field>
+        <field name="model">l10n_mx.fix.policy.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Corregir Política PPD/PUE — Facturas Históricas v19">
+
+                <!-- ── Estado: pendiente ── -->
+                <group invisible="state == 'done'">
+                    <group string="¿Qué facturas corregir?">
+                        <field name="fix_draft"/>
+                        <field name="fix_posted"/>
+                        <field name="only_wrong"/>
+                    </group>
+                    <group string="Vista previa (pulse Calcular primero)">
+                        <field name="count_draft" readonly="1"/>
+                        <field name="count_posted" readonly="1"/>
+                        <field name="count_from_xml" readonly="1"/>
+                        <field name="count_from_term" readonly="1"/>
+                    </group>
+                </group>
+
+                <div class="alert alert-warning" role="alert"
+                     invisible="state == 'done'">
+                    <strong>Fuente de verdad utilizada:</strong><br/>
+                    1. <strong>XML CFDI timbrado</strong> (campo MetodoPago): fuente principal
+                    para facturas publicadas — refleja exactamente lo que se envió al SAT.<br/>
+                    2. <strong>Término de pago</strong>: fallback para borradores o facturas sin XML adjunto.<br/><br/>
+                    Para facturas publicadas, solo se corrige la Política de Pago en pantalla.
+                    El XML timbrado <strong>no se modifica</strong>.
+                </div>
+
+                <!-- ── Estado: completado ── -->
+                <group invisible="state != 'done'">
+                    <group string="Resultado">
+                        <field name="count_fixed" readonly="1"/>
+                        <field name="count_from_xml" readonly="1"/>
+                        <field name="count_from_term" readonly="1"/>
+                        <field name="count_errors" readonly="1"/>
+                    </group>
+                </group>
+
+                <div class="alert alert-success" role="alert"
+                     invisible="state != 'done'">
+                    Corrección completada. Ya puede registrar complementos de pago
+                    en las facturas PPD.
+                </div>
+
+                <footer>
+                    <!-- Botones estado pendiente -->
+                    <button name="action_preview" string="Calcular afectadas"
+                            type="object" class="btn-secondary"
+                            invisible="state == 'done'"/>
+                    <button name="action_fix" string="Ejecutar corrección"
+                            type="object" class="btn-primary"
+                            confirm="¿Confirma la corrección masiva de facturas?"
+                            invisible="state == 'done'"/>
+                    <!-- Botón cerrar estado completado -->
+                    <button string="Cerrar" class="btn-primary"
+                            special="cancel"
+                            invisible="state != 'done'"/>
+                    <button string="Cancelar" special="cancel"
+                            invisible="state == 'done'"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Acción para abrir el wizard ──────────────────────────────────── -->
+    <record id="action_fix_policy_wizard" model="ir.actions.act_window">
+        <field name="name">Corregir Política PPD/PUE (v19)</field>
+        <field name="res_model">l10n_mx.fix.policy.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ─── Ítem de menú en Contabilidad > Configuración ────────────────── -->
+    <menuitem
+        id="menu_fix_policy_wizard"
+        name="Corregir Política PPD/PUE (v19)"
+        parent="account.menu_finance_configuration"
+        action="action_fix_policy_wizard"
+        sequence="999"
+        groups="account.group_account_manager"/>
+
+</odoo>

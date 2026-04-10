@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ============================================================ -->
+        <!-- VISTA FORM — Wizard de Cancelación                            -->
+        <!-- ============================================================ -->
+        <record id="view_mx_tax_settlement_cancel_wizard_form" model="ir.ui.view">
+            <field name="name">mx.tax.settlement.cancel.wizard.form</field>
+            <field name="model">mx.tax.settlement.cancel.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Cancelar Liquidación Fiscal">
+                    <sheet>
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fa fa-exclamation-triangle" title="Atención"/>
+                            <strong> Atención:</strong> Esta acción es irreversible una vez ejecutada.
+                            La liquidación será cancelada y sus asientos contables serán revertidos.
+                        </div>
+
+                        <group>
+                            <group string="Liquidación a Cancelar">
+                                <field name="settlement_id" readonly="1"/>
+                                <field name="settlement_name" readonly="1" string="Folio"/>
+                                <field name="period_display" readonly="1"/>
+                                <field name="total_paid" readonly="1"
+                                       widget="monetary"
+                                       options="{'currency_field': 'currency_id'}"/>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="has_posted_payments" invisible="1"/>
+                            </group>
+                        </group>
+
+                        <!-- Asientos que se revertirán -->
+                        <div class="alert alert-danger"
+                             role="alert"
+                             invisible="not has_posted_payments">
+                            <i class="fa fa-exclamation-circle" title="Advertencia"/>
+                            <strong> Se revertirán los siguientes asientos contables:</strong>
+                            <field name="move_names" nolabel="1" readonly="1"/>
+                        </div>
+
+                        <group string="Motivo de Cancelación (mínimo 20 caracteres)">
+                            <field name="cancel_reason"
+                                   nolabel="1"
+                                   placeholder="Describa detalladamente el motivo de la cancelación..."
+                                   required="1"/>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="action_confirm_cancel"
+                                string="Confirmar Cancelación"
+                                type="object"
+                                class="btn-danger"/>
+                        <button string="Regresar"
+                                class="btn-secondary"
+                                special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

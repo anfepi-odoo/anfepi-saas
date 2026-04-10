@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    
+    <!-- Vista List Simplificada -->
+    <record id="sat_conciliation_report_view_list" model="ir.ui.view">
+        <field name="name">sat.conciliation.report.view.list</field>
+        <field name="model">sat.conciliation.report</field>
+        <field name="arch" type="xml">
+            <list string="Reporte de Conciliación SAT vs Odoo" create="false" edit="false" delete="false">
+                <field name="document_type" string="Concepto"/>
+                <field name="total_sat" string="# XML SAT" sum="Total"/>
+                <field name="importe_sat" string="$ SAT" sum="Total" widget="monetary"/>
+                <field name="total_odoo" string="# XML Odoo" sum="Total"/>
+                <field name="importe_odoo" string="$ Odoo" sum="Total" widget="monetary"/>
+                <field name="total_ignored" string="# Ignorados" sum="Total" optional="show"/>
+                <field name="importe_ignored" string="$ Ignorados" sum="Total" widget="monetary" optional="show"/>
+                <field name="diferencia_xml" string="Dif. XML" sum="Total"/>
+                <field name="diferencia_importe" string="Dif. Importe $" sum="Total" widget="monetary"/>
+                <field name="section_type" column_invisible="1"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista Pivot Mejorada -->
+    <record id="sat_conciliation_report_view_pivot" model="ir.ui.view">
+        <field name="name">sat.conciliation.report.view.pivot</field>
+        <field name="model">sat.conciliation.report</field>
+        <field name="arch" type="xml">
+            <pivot string="Análisis de Conciliación" display_quantity="true">
+                <field name="document_type" type="row"/>
+                <field name="section_type" type="col"/>
+                <field name="total_sat" type="measure"/>
+                <field name="total_odoo" type="measure"/>
+                <field name="diferencia_xml" type="measure"/>
+                <field name="importe_sat" type="measure"/>
+                <field name="importe_odoo" type="measure"/>
+                <field name="diferencia_importe" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Vista Graph para Visualización -->
+    <record id="sat_conciliation_report_view_graph" model="ir.ui.view">
+        <field name="name">sat.conciliation.report.view.graph</field>
+        <field name="model">sat.conciliation.report</field>
+        <field name="arch" type="xml">
+            <graph string="Gráfico de Conciliación" type="bar">
+                <field name="document_type"/>
+                <field name="total_sat" type="measure"/>
+                <field name="total_odoo" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Acción Principal -->
+    <record id="action_sat_conciliation_report" model="ir.actions.act_window">
+        <field name="name">Reporte de Conciliación SAT vs Odoo</field>
+        <field name="res_model">sat.conciliation.report</field>
+        <field name="view_mode">list,pivot,graph</field>
+        <field name="context">{
+            'create': False, 
+            'edit': False, 
+            'delete': False
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay datos de conciliación
+            </p>
+            <p>
+                Haga clic en el menú "Reporte de Conciliación" para generar un nuevo reporte.<br/>
+                Seleccione el rango de fechas y el sistema generará automáticamente<br/>
+                la comparación entre XMLs del SAT y registros en Odoo.
+            </p>
+        </field>
+    </record>
+
+</odoo>

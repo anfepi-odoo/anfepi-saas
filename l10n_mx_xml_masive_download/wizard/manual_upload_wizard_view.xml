@@ -1,0 +1,26 @@
+<!-- views/manual_upload_wizard_view.xml -->
+<odoo>
+    <record id="view_manual_upload_wizard_form" model="ir.ui.view">
+        <field name="name">manual.upload.wizard.form</field>
+        <field name="model">manual.upload.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Manual Upload">
+                <group>
+                    <field name="file_data"/>
+                </group>
+                <footer>
+                    <button string="Upload" type="object" name="action_process_upload" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_manual_upload_wizard" model="ir.actions.act_window">
+        <field name="name">Upload XML</field>
+        <field name="res_model">manual.upload.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_manual_upload_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+</odoo>

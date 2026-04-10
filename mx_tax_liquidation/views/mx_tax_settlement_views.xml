@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ============================================================ -->
+        <!-- VISTA FORM — Liquidación Fiscal                               -->
+        <!-- ============================================================ -->
+        <record id="view_mx_tax_settlement_form" model="ir.ui.view">
+            <field name="name">mx.tax.settlement.form</field>
+            <field name="model">mx.tax.settlement</field>
+            <field name="arch" type="xml">
+                <form string="Liquidación de Obligaciones Fiscales">
+                    <header>
+                        <!-- Botón: Calcular Saldos -->
+                        <button name="action_calculate_balances"
+                                string="Calcular Saldos"
+                                type="object"
+                                class="btn-primary"
+                                invisible="state != 'draft'"
+                                icon="fa-calculator"
+                                help="Lee saldos contables reales de las cuentas configuradas."/>
+                        <!-- Botón: Confirmar -->
+                        <button name="action_confirm"
+                                string="Confirmar"
+                                type="object"
+                                class="btn-primary"
+                                invisible="state != 'draft'"
+                                groups="mx_tax_liquidation.group_tax_settlement_manager"
+                                icon="fa-check"
+                                confirm="¿Confirmar la liquidación? Una vez confirmada no podrá editarse ordinariamente."/>
+                        <!-- Botón: Registrar Pago -->
+                        <button name="action_open_payment_wizard"
+                                string="Registrar Pago al SAT"
+                                type="object"
+                                class="btn-success"
+                                invisible="state not in ('confirmed', 'partial')"
+                                icon="fa-money"/>
+                        <!-- Botón: Cancelar -->
+                        <button name="action_open_cancel_wizard"
+                                string="Cancelar"
+                                type="object"
+                                class="btn-danger"
+                                invisible="state in ('draft', 'cancel')"
+                                groups="mx_tax_liquidation.group_tax_settlement_manager"
+                                icon="fa-ban"/>
+                        <!-- Botón: Imprimir -->
+                        <button name="%(action_report_mx_tax_settlement)d"
+                                string="Imprimir"
+                                type="action"
+                                class="btn-secondary"
+                                invisible="state == 'draft'"
+                                icon="fa-print"/>
+                        <!-- Barra de estado -->
+                        <field name="state"
+                               widget="statusbar"
+                               statusbar_visible="draft,confirmed,partial,paid"/>
+                    </header>
+
+                    <sheet>
+                        <!-- Smart Buttons -->
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_moves"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    icon="fa-book"
+                                    invisible="move_count == 0">
+                                <field name="move_count" widget="statinfo" string="Asientos"/>
+                            </button>
+                        </div>
+
+                        <!-- Título -->
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1"/>
+                            </h1>
+                        </div>
+
+                        <!-- Cabecera del documento -->
+                        <group>
+                            <group string="Identificación">
+                                <field name="company_id"
+                                       options="{'no_create': True}"
+                                       readonly="state != 'draft'"/>
+                                <field name="payment_type"
+                                       widget="radio"
+                                       readonly="state != 'draft'"/>
+                                <field name="period_date"
+                                       widget="date"
+                                       readonly="state != 'draft'"/>
+                                <field name="period_display" readonly="1"/>
+                                <field name="calculation_date"
+                                       readonly="state != 'draft'"/>
+                            </group>
+                            <group string="Control">
+                                <field name="responsible_id"
+                                       options="{'no_create': True}"
+                                       readonly="state != 'draft'"/>
+                                <field name="journal_id"
+                                       options="{'no_create': True}"
+                                       readonly="state != 'draft'"/>
+                                <field name="sat_reference" readonly="1"/>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="confirmation_date"
+                                       readonly="1"
+                                       invisible="state == 'draft'"/>
+                                <field name="confirmation_uid"
+                                       readonly="1"
+                                       invisible="state == 'draft'"/>
+                            </group>
+                        </group>
+
+                        <!-- Alerta declaración complementaria -->
+                        <div class="alert alert-warning" role="alert"
+                             invisible="payment_type != 'complementary'">
+                            <strong>⚠️ Declaración Complementaria (Art. 32 CFF)</strong><br/>
+                            Esta declaración corrige una Normal del mismo período.
+                            Recuerde los límites del SAT:<br/>
+                            • <strong>A favor del SAT</strong> (diferencia positiva — paga más):
+                            complementarias <strong>ilimitadas</strong>.<br/>
+                            • <strong>A favor del contribuyente</strong> (paga menos o genera saldo a favor):
+                            máximo <strong>2 por período</strong>.<br/>
+                            Verifique con su asesor fiscal antes de presentar.
+                        </div>
+
+                        <!-- Pestañas -->
+                        <notebook>
+                            <!-- PESTAÑA: Conceptos Fiscales -->
+                            <page string="Conceptos Fiscales" name="lines">
+                                <field name="line_ids"
+                                       readonly="state != 'draft'">
+                                    <list string="Líneas de Liquidación"
+                                          editable="bottom"
+                                          decoration-success="line_state == 'paid'"
+                                          decoration-warning="line_state == 'partial'"
+                                          decoration-danger="difference_pct &gt; 5.0 and not difference_justification"
+                                          decoration-info="line_state == 'favor'"
+                                          decoration-muted="line_state in ('deferred', 'zero')">
+                                        <field name="tax_concept_id" readonly="1"/>
+                                        <field name="balance_liability"
+                                               string="Saldo Pasivo"
+                                               readonly="1"/>
+                                        <field name="balance_compensation"
+                                               string="Compensación"
+                                               readonly="1"/>
+                                        <field name="amount_determined"
+                                               string="Determinado"
+                                               readonly="1"/>
+                                        <field name="amount_to_pay" string="A Pagar"/>
+                                        <field name="amount_paid"
+                                               string="Pagado"
+                                               readonly="1"/>
+                                        <field name="amount_pending"
+                                               string="Pendiente"
+                                               readonly="1"/>
+                                        <field name="difference_pct"
+                                               string="Dif %"
+                                               readonly="1"/>
+                                        <field name="line_state"
+                                               string="Estado"
+                                               readonly="1"/>
+                                        <field name="is_deferred" string="Diferida"/>
+                                        <field name="difference_justification"
+                                               string="Justificación"
+                                               optional="show"/>
+                                        <field name="calculation_note"
+                                               string="Nota Cálculo"
+                                               readonly="1"
+                                               optional="hide"/>
+                                        <field name="currency_id" column_invisible="1"/>
+                                        <field name="requires_reclassification" column_invisible="1"/>
+                                    </list>
+                                </field>
+
+                                <!-- Panel de totales -->
+                                <div class="o_field_widget o_section_and_note_text_field">
+                                    <group class="oe_subtotal_footer oe_right" col="2">
+                                        <field name="total_determined"
+                                               widget="monetary"
+                                               string="Total Determinado"
+                                               options="{'currency_field': 'currency_id'}"
+                                               class="oe_subtotal_footer_separator"/>
+                                        <field name="total_to_pay"
+                                               widget="monetary"
+                                               string="Total a Pagar"
+                                               options="{'currency_field': 'currency_id'}"/>
+                                        <field name="total_paid"
+                                               widget="monetary"
+                                               string="Total Pagado"
+                                               options="{'currency_field': 'currency_id'}"/>
+                                        <field name="total_pending"
+                                               widget="monetary"
+                                               string="Pendiente"
+                                               options="{'currency_field': 'currency_id'}"
+                                               class="oe_subtotal_footer_separator"/>
+                                    </group>
+                                </div>
+                            </page>
+
+                            <!-- PESTAÑA: Pagos al SAT -->
+                            <page string="Pagos al SAT" name="payments">
+                                <field name="payment_ids" readonly="1">
+                                    <list string="Eventos de Pago"
+                                          decoration-success="state == 'posted'"
+                                          decoration-danger="state == 'reversed'"
+                                          decoration-muted="state == 'draft'">
+                                        <field name="payment_date"/>
+                                        <field name="amount_total"/>
+                                        <field name="distribution_mode"/>
+                                        <field name="bank_account_id"/>
+                                        <field name="bank_reference"/>
+                                        <field name="move_id"/>
+                                        <field name="state"/>
+                                        <field name="currency_id" column_invisible="1"/>
+                                        <field name="company_id" column_invisible="1"/>
+                                    </list>
+                                </field>
+                            </page>
+
+                            <!-- PESTAÑA: Bitácora de Auditoría -->
+                            <page string="Auditoría"
+                                  name="audit"
+                                  groups="mx_tax_liquidation.group_tax_settlement_manager">
+                                <field name="log_ids" readonly="1">
+                                    <list string="Bitácora" default_order="timestamp desc">
+                                        <field name="timestamp"/>
+                                        <field name="action"/>
+                                        <field name="user_id"/>
+                                        <field name="description"/>
+                                        <field name="ip_address"/>
+                                    </list>
+                                </field>
+                            </page>
+
+                            <!-- PESTAÑA: Cancelación (solo si fue cancelada) -->
+                            <page string="Cancelación"
+                                  name="cancel_info"
+                                  invisible="state != 'cancel'">
+                                <group>
+                                    <field name="cancel_reason" readonly="1"/>
+                                    <field name="cancel_date" readonly="1"/>
+                                    <field name="cancel_uid" readonly="1"/>
+                                </group>
+                            </page>
+
+                            <!-- PESTAÑA: Notas -->
+                            <page string="Notas" name="notes">
+                                <field name="notes"
+                                       placeholder="Notas internas sobre esta liquidación..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+
+                    <!-- Chatter (Odoo 19: <chatter/> reemplaza <div class="oe_chatter">) -->
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- VISTA LIST — Liquidaciones                                     -->
+        <!-- ============================================================ -->
+        <record id="view_mx_tax_settlement_list" model="ir.ui.view">
+            <field name="name">mx.tax.settlement.list</field>
+            <field name="model">mx.tax.settlement</field>
+            <field name="arch" type="xml">
+                <list string="Liquidaciones Fiscales"
+                      decoration-success="state == 'paid'"
+                      decoration-warning="state in ('confirmed', 'partial')"
+                      decoration-danger="state == 'cancel'"
+                      decoration-muted="state == 'draft'">
+                    <field name="name"/>
+                    <field name="company_id" optional="show"
+                           groups="base.group_multi_company"/>
+                    <field name="period_display" string="Período"/>
+                    <field name="payment_type" widget="badge"
+                           decoration-warning="payment_type == 'complementary'"
+                           decoration-info="payment_type == 'normal'"/>
+                    <field name="calculation_date"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state == 'paid'"
+                           decoration-warning="state in ('confirmed', 'partial')"
+                           decoration-danger="state == 'cancel'"
+                           decoration-info="state == 'draft'"/>
+                    <field name="total_determined"/>
+                    <field name="total_to_pay"/>
+                    <field name="total_paid"/>
+                    <field name="total_pending"/>
+                    <field name="responsible_id"/>
+                    <field name="currency_id" column_invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- VISTA SEARCH — Liquidaciones                                   -->
+        <!-- ============================================================ -->
+        <record id="view_mx_tax_settlement_search" model="ir.ui.view">
+            <field name="name">mx.tax.settlement.search</field>
+            <field name="model">mx.tax.settlement</field>
+            <field name="arch" type="xml">
+                <search string="Buscar Liquidaciones">
+                    <field name="name" string="Folio"/>
+                    <field name="period_date"/>
+                    <field name="responsible_id"/>
+                    <separator/>
+                    <filter string="Borrador" name="draft"
+                            domain="[('state', '=', 'draft')]"/>
+                    <filter string="Confirmadas" name="confirmed"
+                            domain="[('state', '=', 'confirmed')]"/>
+                    <filter string="Pago Parcial" name="partial"
+                            domain="[('state', '=', 'partial')]"/>
+                    <filter string="Pagadas" name="paid"
+                            domain="[('state', '=', 'paid')]"/>
+                    <filter string="Canceladas" name="cancel"
+                            domain="[('state', '=', 'cancel')]"/>
+                    <separator/>
+                    <filter string="Normales" name="type_normal"
+                            domain="[('payment_type', '=', 'normal')]"/>
+                    <filter string="Complementarias" name="type_comp"
+                            domain="[('payment_type', '=', 'complementary')]"/>
+                    <separator/>
+                    <filter string="Este Mes" name="this_month"
+                            domain="[('period_year', '=', context_today().year),
+                                     ('period_month', '=', context_today().month)]"/>
+                    <filter string="Pendientes de Pago" name="pending"
+                            domain="[('state', 'in', ['confirmed', 'partial'])]"/>
+                    <separator/>
+                    <group>
+                        <filter string="Empresa" name="group_company"
+                                context="{'group_by': 'company_id'}"/>
+                        <filter string="Estado" name="group_state"
+                                context="{'group_by': 'state'}"/>
+                        <filter string="Año" name="group_year"
+                                context="{'group_by': 'period_year'}"/>
+                        <filter string="Mes" name="group_month"
+                                context="{'group_by': 'period_month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- ACCIÓN — Liquidaciones Fiscales                               -->
+        <!-- ============================================================ -->
+        <record id="action_mx_tax_settlement" model="ir.actions.act_window">
+            <field name="name">Liquidaciones de Obligaciones Fiscales</field>
+            <field name="res_model">mx.tax.settlement</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_mx_tax_settlement_search"/>
+            <field name="context">{
+                'search_default_pending': 1
+            }</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No hay liquidaciones fiscales registradas.
+                </p>
+                <p>
+                    Cree una nueva liquidación para gestionar el pago mensual
+                    de obligaciones fiscales: ISR, IVA y retenciones al SAT.
+                </p>
+            </field>
+        </record>
+    </data>
+</odoo>

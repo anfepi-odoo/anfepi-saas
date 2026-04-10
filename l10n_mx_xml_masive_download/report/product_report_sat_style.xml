@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<data>
+   <template id="report_product" >
+       <t t-call="web.html_container">
+           <t t-foreach="docs" t-as="o">
+               <t t-call="web.external_layout">
+                   <div class="page" style="font-family: Arial, sans-serif; font-size: 9pt;">
+                       
+                       <t t-set="is_emitted" t-value="o.cfdi_type == 'emitidos'"/>
+                       <t t-set="emisor" t-value="o.company_id if is_emitted else o.partner_id"/>
+                       <t t-set="receptor" t-value="o.partner_id if is_emitted else o.company_id"/>
+                       
+                       <!-- Encabezado con Logo y Datos del Emisor -->
+                       <div style="border: 2px solid #000; padding: 10px; margin-bottom: 10px;">
+                           <div class="row">
+                               <div class="col-3 text-center">
+                                   <img t-if="emisor.logo" t-att-src="'data:image/png;base64,%s' % emisor.logo.decode('utf-8')" 
+                                        style="max-height: 80px; max-width: 100%;"/>
+                               </div>
+                               <div class="col-6">
+                                   <strong style="font-size: 12pt;"><span t-field="emisor.name"/></strong><br/>
+                                   <span t-field="emisor.street"/><br/>
+                                   <t t-if="emisor.street2"><span t-field="emisor.street2"/><br/></t>
+                                   <span t-field="emisor.city"/>, <span t-field="emisor.state_id.name"/> <span t-field="emisor.zip"/><br/>
+                                   RFC: <strong><span t-field="emisor.vat"/></strong><br/>
+                                   <t t-if="hasattr(emisor, 'l10n_mx_edi_fiscal_regime')">
+                                       Régimen Fiscal: <span t-field="emisor.l10n_mx_edi_fiscal_regime"/>
+                                   </t>
+                               </div>
+                               <div class="col-3" style="text-align: right; border-left: 1px solid #ccc; padding-left: 10px;">
+                                   <strong>FOLIO FISCAL (UUID)</strong><br/>
+                                   <span t-field="o.name" style="font-size: 8pt; word-break: break-all;"/><br/><br/>
+                                   <strong>No. Certificado:</strong><br/>
+                                   <span style="font-size: 8pt;">N/A</span><br/><br/>
+                                   <strong>Serie y Folio:</strong><br/>
+                                   <span t-field="o.serie"/> - <span t-field="o.folio"/>
+                               </div>
+                           </div>
+                       </div>
+
+                       <!-- Información del Comprobante -->
+                       <div style="border: 2px solid #000; padding: 8px; margin-bottom: 10px; background-color: #f0f0f0;">
+                           <div class="row">
+                               <div class="col-4">
+                                   <strong>Tipo de Comprobante:</strong><br/>
+                                   <t t-if="o.document_type == 'I'">Ingreso</t>
+                                   <t t-elif="o.document_type == 'E'">Egreso</t>
+                                   <t t-elif="o.document_type == 'P'">Pago</t>
+                                   <t t-elif="o.document_type == 'T'">Traslado</t>
+                                   <t t-elif="o.document_type == 'N'">Nómina</t>
+                                   <t t-else><span t-field="o.document_type"/></t>
+                               </div>
+                               <div class="col-4">
+                                   <strong>Fecha y Hora de Expedición:</strong><br/>
+                                   <span t-field="o.document_date" t-options='{"format": "dd/MM/yyyy HH:mm:ss"}'/>
+                               </div>
+                               <div class="col-4">
+                                   <strong>Lugar de Expedición:</strong><br/>
+                                   <span t-field="emisor.zip"/>
+                               </div>
+                           </div>
+                       </div>
+
+                       <!-- Datos del Receptor -->
+                       <div style="border: 2px solid #000; padding: 8px; margin-bottom: 10px;">
+                           <div class="row">
+                               <div class="col-12" style="background-color: #e0e0e0; padding: 5px; margin-bottom: 5px;">
+                                   <strong>RECEPTOR</strong>
+                               </div>
+                           </div>
+                           <div class="row">
+                               <div class="col-6">
+                                   <strong>Nombre:</strong> <span t-field="receptor.name"/><br/>
+                                   <strong>RFC:</strong> <span t-field="receptor.vat"/><br/>
+                                   <t t-if="hasattr(receptor, 'l10n_mx_edi_fiscal_regime')">
+                                       <strong>Régimen Fiscal:</strong> <span t-field="receptor.l10n_mx_edi_fiscal_regime"/><br/>
+                                   </t>
+                               </div>
+                               <div class="col-6">
+                                   <strong>Uso CFDI:</strong> <span t-field="o.cfdi_usage"/><br/>
+                                   <strong>Domicilio Fiscal:</strong> <span t-field="receptor.zip"/><br/>
+                               </div>
+                           </div>
+                       </div>
+
+                       <!-- Conceptos -->
+                       <div style="border: 2px solid #000; margin-bottom: 10px;">
+                           <div style="background-color: #e0e0e0; padding: 5px;">
+                               <strong>CONCEPTOS</strong>
+                           </div>
+                           <table class="table table-sm" style="margin-bottom: 0;">
+                               <thead style="background-color: #f5f5f5;">
+                                   <tr>
+                                       <th style="border: 1px solid #ccc; padding: 4px; width: 10%;">Clave Prod/Serv</th>
+                                       <th style="border: 1px solid #ccc; padding: 4px; width: 5%;">Cant</th>
+                                       <th style="border: 1px solid #ccc; padding: 4px; width: 10%;">Clave Unidad</th>
+                                       <th style="border: 1px solid #ccc; padding: 4px; width: 35%;">Descripción</th>
+                                       <th style="border: 1px solid #ccc; padding: 4px; width: 13%;">Valor Unitario</th>
+                                       <th style="border: 1px solid #ccc; padding: 4px; width: 13%;">Importe</th>
+                                       <th style="border: 1px solid #ccc; padding: 4px; width: 14%;">Impuestos</th>
+                                   </tr>
+                               </thead>
+                               <tbody>
+                                   <t t-foreach="o.downloaded_product_id" t-as="line">
+                                       <tr>
+                                           <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt;">
+                                               <span t-esc="line.sat_id.code if line.sat_id else 'N/A'"/>
+                                           </td>
+                                           <td style="border: 1px solid #ccc; padding: 4px; text-align: right;">
+                                               <span t-esc="'{:,.2f}'.format(float(line.quantity or 0))"/>
+                                           </td>
+                                           <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt;">
+                                               <span t-esc="line.product_metrics"/>
+                                           </td>
+                                           <td style="border: 1px solid #ccc; padding: 4px;">
+                                               <span t-esc="line.description"/>
+                                           </td>
+                                           <td style="border: 1px solid #ccc; padding: 4px; text-align: right;">
+                                               $<span t-esc="'{:,.2f}'.format(float(line.unit_value or 0))"/>
+                                           </td>
+                                           <td style="border: 1px solid #ccc; padding: 4px; text-align: right;">
+                                               $<span t-esc="'{:,.2f}'.format(float(line.total_amount or 0))"/>
+                                           </td>
+                                           <td style="border: 1px solid #ccc; padding: 4px; font-size: 8pt;">
+                                               <t t-foreach="line.tax_id" t-as="tax">
+                                                   <span t-esc="tax.name"/>: $<span t-esc="'{:,.2f}'.format(float(line.total_amount or 0) * float(tax.amount) / 100)"/><br/>
+                                               </t>
+                                           </td>
+                                       </tr>
+                                   </t>
+                               </tbody>
+                           </table>
+                       </div>
+
+                       <!-- Totales -->
+                       <div class="row">
+                           <div class="col-7">
+                               <!-- Espacio para QR y Sellos -->
+                               <div style="border: 2px solid #000; padding: 8px; min-height: 200px;">
+                                   <div style="text-align: center; margin-bottom: 10px;">
+                                       <!-- QR Code -->
+                                       <t t-set="qr_data" t-value="'https://verificacfdi.facturaelectronica.sat.gob.mx/default.aspx?id=%s&amp;re=%s&amp;rr=%s&amp;tt=%s&amp;fe=%s' % (o.name, emisor.vat, receptor.vat, o.amount_total, o.name[-8:])"/>
+                                       <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('QR', qr_data, 200, 200)" 
+                                            style="max-width: 150px; max-height: 150px;"/>
+                                       <br/>
+                                       <small>Código QR de Verificación SAT</small>
+                                   </div>
+                                   <div style="font-size: 7pt; word-break: break-all;">
+                                       <strong>Sello Digital del CFDI:</strong><br/>
+                                       <span style="color: #666;">El sello digital se encuentra en el archivo XML original</span><br/><br/>
+                                       <strong>Sello del SAT:</strong><br/>
+                                       <span style="color: #666;">El sello del SAT se encuentra en el archivo XML original</span><br/><br/>
+                                       <strong>Cadena Original del complemento de certificación digital del SAT:</strong><br/>
+                                       <span style="color: #666;">La cadena original se encuentra en el archivo XML original</span>
+                                   </div>
+                               </div>
+                           </div>
+                           <div class="col-5">
+                               <div style="border: 2px solid #000; padding: 8px;">
+                                   <table class="table table-sm" style="margin-bottom: 0; font-size: 10pt;">
+                                       <tr>
+                                           <td><strong>Subtotal:</strong></td>
+                                           <td style="text-align: right;">
+                                               $<span t-esc="'{:,.2f}'.format(float(o.sub_total or 0))"/>
+                                           </td>
+                                       </tr>
+                                       <t t-if="o.discount">
+                                           <tr>
+                                               <td><strong>Descuento:</strong></td>
+                                               <td style="text-align: right;">
+                                                   -$<span t-esc="'{:,.2f}'.format(float(o.discount or 0))"/>
+                                               </td>
+                                           </tr>
+                                       </t>
+                                       <tr>
+                                           <td><strong>Traslados:</strong></td>
+                                           <td style="text-align: right;">
+                                               $<span t-esc="'{:,.2f}'.format(float(o.total_impuestos or 0))"/>
+                                           </td>
+                                       </tr>
+                                       <t t-if="o.total_retenciones and float(o.total_retenciones) > 0">
+                                           <tr>
+                                               <td><strong>Retenciones:</strong></td>
+                                               <td style="text-align: right;">
+                                                   -$<span t-esc="'{:,.2f}'.format(float(o.total_retenciones or 0))"/>
+                                               </td>
+                                           </tr>
+                                       </t>
+                                       <tr style="border-top: 2px solid #000; background-color: #f0f0f0;">
+                                           <td><strong style="font-size: 12pt;">TOTAL:</strong></td>
+                                           <td style="text-align: right;">
+                                               <strong style="font-size: 12pt;">$<span t-esc="'{:,.2f}'.format(float(o.amount_total or 0))"/></strong>
+                                           </td>
+                                       </tr>
+                                       <tr>
+                                           <td colspan="2">
+                                               <strong>Moneda:</strong> <span t-field="o.divisa"/>
+                                           </td>
+                                       </tr>
+                                       <tr>
+                                           <td colspan="2">
+                                               <strong>Forma de Pago:</strong> <span t-field="o.payment_method_sat"/>
+                                           </td>
+                                       </tr>
+                                       <tr>
+                                           <td colspan="2">
+                                               <strong>Método de Pago:</strong> <span t-field="o.payment_method"/>
+                                           </td>
+                                       </tr>
+                                   </table>
+                               </div>
+                           </div>
+                       </div>
+
+                       <!-- Pie de página con información adicional -->
+                       <div style="margin-top: 10px; font-size: 7pt; border-top: 1px solid #ccc; padding-top: 5px;">
+                           <div class="row">
+                               <div class="col-12">
+                                   <strong>Este documento es una representación impresa de un CFDI</strong><br/>
+                                   UUID: <span t-field="o.name"/><br/>
+                                   Fecha de certificación: <span t-field="o.document_date"/><br/>
+                                   Estado SAT: <span t-field="o.sat_state"/><br/>
+                                   <t t-if="o.estatus_69b">
+                                       Estatus Art. 69-B: <span t-field="o.estatus_69b"/><br/>
+                                   </t>
+                               </div>
+                           </div>
+                       </div>
+
+                   </div>
+               </t>
+           </t>
+       </t>
+   </template>
+</data>
+</odoo>

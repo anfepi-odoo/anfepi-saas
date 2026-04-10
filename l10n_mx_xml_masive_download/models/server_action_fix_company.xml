@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 
+    Acción de servidor para corregir la empresa asignada a XMLs del SAT
+    
+    Funcionalidad:
+    - Emitidos: Reasigna la empresa según el RFC Emisor del XML
+    - Recibidos: Reasigna la empresa según el RFC Receptor del XML
+    
+    Uso:
+    1. Filtrar por "⚠️ Empresa Incorrecta" para ver XMLs con company_mismatch
+    2. Seleccionar los registros a corregir
+    3. Acción > 🔧 Reasignar Empresa por RFC
+    
+    Nota: Esta acción busca la empresa por RFC y crea/asocia el batch apropiado
+    -->
+    <record id="action_server_fix_xml_company_by_rfc" model="ir.actions.server">
+        <field name="name">🔧 Reasignar Empresa por RFC</field>
+        <field name="model_id" ref="model_account_edi_downloaded_xml_sat"/>
+        <field name="binding_model_id" ref="model_account_edi_downloaded_xml_sat"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+if records:
+    action = records.action_fix_company_by_rfc()
+        </field>
+    </record>
+</odoo>

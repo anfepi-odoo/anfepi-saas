@@ -1,0 +1,19 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mx_tax_concept_user,mx.tax.concept user,model_mx_tax_concept,group_tax_settlement_user,1,0,0,0
+access_mx_tax_concept_config,mx.tax.concept config,model_mx_tax_concept,group_tax_settlement_config,1,1,1,1
+access_mx_tax_settlement_config_user,mx.tax.settlement.config user,model_mx_tax_settlement_config,group_tax_settlement_user,1,0,0,0
+access_mx_tax_settlement_config_manager,mx.tax.settlement.config manager,model_mx_tax_settlement_config,group_tax_settlement_manager,1,0,0,0
+access_mx_tax_settlement_config_admin,mx.tax.settlement.config admin,model_mx_tax_settlement_config,group_tax_settlement_config,1,1,1,1
+access_mx_tax_settlement_user,mx.tax.settlement user,model_mx_tax_settlement,group_tax_settlement_user,1,0,0,0
+access_mx_tax_settlement_manager,mx.tax.settlement manager,model_mx_tax_settlement,group_tax_settlement_manager,1,1,1,1
+access_mx_tax_settlement_line_user,mx.tax.settlement.line user,model_mx_tax_settlement_line,group_tax_settlement_user,1,0,0,0
+access_mx_tax_settlement_line_manager,mx.tax.settlement.line manager,model_mx_tax_settlement_line,group_tax_settlement_manager,1,1,1,1
+access_mx_tax_settlement_payment_user,mx.tax.settlement.payment user,model_mx_tax_settlement_payment,group_tax_settlement_user,1,1,1,0
+access_mx_tax_settlement_payment_manager,mx.tax.settlement.payment manager,model_mx_tax_settlement_payment,group_tax_settlement_manager,1,1,1,1
+access_mx_tax_settlement_payment_line_user,mx.tax.settlement.payment.line user,model_mx_tax_settlement_payment_line,group_tax_settlement_user,1,1,1,0
+access_mx_tax_settlement_payment_line_manager,mx.tax.settlement.payment.line manager,model_mx_tax_settlement_payment_line,group_tax_settlement_manager,1,1,1,1
+access_mx_tax_settlement_log_manager,mx.tax.settlement.log manager,model_mx_tax_settlement_log,group_tax_settlement_manager,1,0,1,0
+access_mx_tax_settlement_log_auditor,mx.tax.settlement.log auditor,model_mx_tax_settlement_log,group_tax_settlement_auditor,1,0,0,0
+access_mx_tax_settlement_pay_wizard_user,mx.tax.settlement.pay.wizard user,model_mx_tax_settlement_pay_wizard,group_tax_settlement_user,1,1,1,1
+access_mx_tax_settlement_pay_wizard_line_user,mx.tax.settlement.pay.wizard.line user,model_mx_tax_settlement_pay_wizard_line,group_tax_settlement_user,1,1,1,1
+access_mx_tax_settlement_cancel_wizard_manager,mx.tax.settlement.cancel.wizard manager,model_mx_tax_settlement_cancel_wizard,group_tax_settlement_manager,1,1,1,1

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_mx_tax_settlement" model="ir.sequence">
+            <field name="name">Liquidación Fiscal SAT</field>
+            <field name="code">mx.tax.settlement</field>
+            <field name="prefix">%(year)s%(month)s</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range" eval="False"/>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo>

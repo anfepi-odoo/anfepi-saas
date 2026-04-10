@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<data>
+   <template id="report_product">
+       <t t-call="web.html_container">
+           <t t-foreach="docs" t-as="o">
+               <t t-set="o_company" t-value="o.company_id"/>
+               <div class="page">
+                       <meta charset="utf-8"/>
+                       <style>
+                           @page { 
+                               margin-top: 10mm; 
+                               margin-bottom: 10mm; 
+                               margin-left: 15mm; 
+                               margin-right: 15mm; 
+                           }
+                           body { font-family: Arial, sans-serif; font-size: 10pt; margin: 0; padding: 0; }
+                           .page { margin: 0 !important; padding: 0 20px !important; }
+                           
+                           /* Ocultar encabezado */
+                           .header { display: none !important; }
+                           .o_company_1_layout_header { display: none !important; }
+                           
+                           .cfdi-header {
+                               background-color: #1e40af;
+                               color: white !important;
+                               padding: 20px;
+                               margin: 0 0 15px 0;
+                               border-radius: 8px;
+                               box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                           }
+                           .cfdi-header h2 {
+                               margin: 0;
+                               font-size: 20px;
+                               font-weight: bold;
+                               color: white !important;
+                               text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+                           }
+                           .cfdi-header p {
+                               margin: 8px 0 0 0;
+                               font-size: 11px;
+                               color: white !important;
+                               opacity: 0.95;
+                           }
+                           
+                           .cfdi-section {
+                               border: 1px solid #cbd5e1;
+                               padding: 12px;
+                               margin-bottom: 12px;
+                               border-radius: 6px;
+                               background-color: #ffffff;
+                           }
+                           .cfdi-section-title {
+                               background-color: #3b82f6;
+                               color: white;
+                               padding: 8px 12px;
+                               margin: -12px -12px 12px -12px;
+                               border-radius: 5px 5px 0 0;
+                               font-weight: bold;
+                               font-size: 12px;
+                           }
+                           
+                           .cfdi-table {
+                               width: 100%;
+                               border-collapse: collapse;
+                               margin-top: 10px;
+                               font-size: 9pt;
+                           }
+                           .cfdi-table thead {
+                               background-color: #3b82f6;
+                               color: white;
+                           }
+                           .cfdi-table th {
+                               border: 1px solid #cbd5e1;
+                               padding: 8px 6px;
+                               text-align: left;
+                               font-size: 9pt;
+                               font-weight: bold;
+                           }
+                           .cfdi-table td {
+                               border: 1px solid #e2e8f0;
+                               padding: 6px;
+                               text-align: left;
+                               font-size: 9pt;
+                           }
+                           .cfdi-table tbody tr:nth-child(even) {
+                               background-color: #f8fafc;
+                           }
+                           
+                           .totales-container {
+                               margin-top: 15px;
+                               text-align: right;
+                           }
+                           .cfdi-totals {
+                               width: 350px;
+                               border: 2px solid #3b82f6;
+                               border-radius: 6px;
+                               overflow: hidden;
+                               display: inline-block;
+                               text-align: left;
+                           }
+                           .cfdi-totals-row {
+                               display: flex;
+                               justify-content: space-between;
+                               padding: 8px 15px;
+                               border-bottom: 1px solid #e2e8f0;
+                               background-color: #f8fafc;
+                           }
+                           .cfdi-totals-row:last-child {
+                               border-bottom: none;
+                               font-weight: bold;
+                               font-size: 14px;
+                               background-color: #dbeafe;
+                               color: #1e3a8a;
+                           }
+                           .cfdi-totals-label {
+                               font-weight: 600;
+                               color: #334155;
+                           }
+                           .cfdi-totals-value {
+                               text-align: right;
+                               font-weight: 600;
+                               color: #1e3a8a;
+                           }
+                           .cfdi-totals-value {
+                               font-weight: bold;
+                               color: #1e40af;
+                               text-align: right;
+                           }
+                           
+                           .sello-section {
+                               border: 1px solid #cbd5e1;
+                               padding: 10px;
+                               margin: 10px 0;
+                               border-radius: 6px;
+                               background-color: #f8fafc;
+                           }
+                           .sello-title {
+                               font-weight: bold;
+                               color: #1e40af;
+                               font-size: 10px;
+                               margin-bottom: 5px;
+                           }
+                           .sello-content {
+                               font-family: 'Courier New', monospace;
+                               font-size: 7px;
+                               color: #334155;
+                               word-break: break-all;
+                               line-height: 1.3;
+                               max-height: 60px;
+                               overflow: hidden;
+                           }
+                           
+                           .qr-section {
+                               border: 2px solid #3b82f6;
+                               padding: 15px;
+                               margin: 20px 0;
+                               border-radius: 8px;
+                               background-color: #f8fafc;
+                               text-align: center;
+                               page-break-inside: avoid;
+                               page-break-inside: avoid !important;
+                               -webkit-column-break-inside: avoid;
+                               break-inside: avoid;
+                               display: block;
+                           }
+                           .qr-title {
+                               font-weight: bold;
+                               color: #1e3a8a;
+                               font-size: 12px;
+                               margin-bottom: 10px;
+                           }
+                           
+                           .info-label {
+                               font-weight: 600;
+                               color: #1e3a8a;
+                           }
+                           
+                           .cfdi-section, .sello-section, .totales-container {
+                               page-break-inside: avoid;
+                           }
+                           
+                           .footer-text {
+                               margin-top: 20px;
+                               padding-top: 15px;
+                               border-top: 2px solid #3b82f6;
+                               text-align: center;
+                               font-size: 9px;
+                               color: #64748b;
+                           }
+                       </style>
+
+                       <!-- Header con tipo de comprobante -->
+                       <div class="cfdi-header text-center">
+                           <h2>
+                               <t t-if="o.document_type == 'I'">COMPROBANTE FISCAL DIGITAL - INGRESO</t>
+                               <t t-if="o.document_type == 'E'">COMPROBANTE FISCAL DIGITAL - EGRESO</t>
+                               <t t-if="o.document_type == 'T'">COMPROBANTE FISCAL DIGITAL - TRASLADO</t>
+                               <t t-if="o.document_type == 'N'">COMPROBANTE FISCAL DIGITAL - NÓMINA</t>
+                               <t t-if="o.document_type == 'P'">COMPROBANTE FISCAL DIGITAL - PAGO</t>
+                               <t t-if="o.document_type not in ['I','E','T','N','P']">COMPROBANTE FISCAL DIGITAL</t>
+                           </h2>
+                           <p>Versión 4.0 del Comprobante</p>
+                       </div>
+
+                       <!-- Folio Fiscal (sin QR aquí) -->
+                       <div style="border: 2px solid #3b82f6; padding: 12px; margin: 10px 0; border-radius: 6px; background-color: #f8fafc;">
+                           <div style="font-weight: bold; color: #1e3a8a; font-size: 12px; margin-bottom: 5px;">FOLIO FISCAL (UUID)</div>
+                           <div style="font-family: 'Courier New', monospace; font-size: 11px; color: #334155; word-break: break-all;"><t t-esc="o.name"/></div>
+                           <div style="margin-top: 8px; font-size: 9px; color: #64748b;">
+                               <strong>Certificado Emisor:</strong> <t t-esc="o.certificate_number or 'N/A'"/> |
+                               <strong>Certificado SAT:</strong> <t t-esc="o.certificate_sat_number or 'N/A'"/>
+                           </div>
+                       </div>
+
+                       <t t-set="is_emitted" t-value="o.cfdi_type == 'emitidos'"/>
+
+                       <!-- Emisor y Receptor -->
+                       <div style="display: table; width: 100%; margin-bottom: 12px;">
+                           <div style="display: table-cell; width: 50%; padding-right: 6px; vertical-align: top;">
+                               <div class="cfdi-section">
+                                   <div class="cfdi-section-title">
+                                       <i class="fa fa-building"/> <t t-esc="'EMISOR' if is_emitted else 'RECEPTOR'"/>
+                                   </div>
+                                   <p><span class="info-label">Razón Social:</span> <span t-field="o.company_id.name"/></p>
+                                   <p><span class="info-label">RFC:</span> <span t-field="o.company_id.vat"/></p>
+                                   <p><span class="info-label">Régimen Fiscal:</span> <span t-field="o.tax_regime"/></p>
+                               </div>
+                           </div>
+                           <div style="display: table-cell; width: 50%; padding-left: 6px; vertical-align: top;">
+                               <div class="cfdi-section">
+                                   <div class="cfdi-section-title">
+                                       <i class="fa fa-user"/> <t t-esc="'RECEPTOR' if is_emitted else 'EMISOR'"/>
+                                   </div>
+                                   <p><span class="info-label">Razón Social:</span> <span t-field="o.partner_id.name"/></p>
+                                   <p><span class="info-label">RFC:</span> <span t-field="o.partner_id.vat"/></p>
+                                   <p><span class="info-label">Uso CFDI:</span> <span t-field="o.cfdi_usage"/></p>
+                               </div>
+                           </div>
+                       </div>
+
+                       <!-- Datos del Comprobante -->
+                       <div class="cfdi-section">
+                           <div class="cfdi-section-title">
+                               <i class="fa fa-file-text"/> DATOS DEL COMPROBANTE
+                           </div>
+                           <div style="display: table; width: 100%;">
+                               <div style="display: table-cell; width: 50%; padding-right: 10px; vertical-align: top;">
+                                   <p><span class="info-label">Serie:</span> <span t-field="o.serie"/> | <span class="info-label">Folio:</span> <span t-field="o.folio"/></p>
+                                   <p><span class="info-label">Fecha de Emisión:</span> <span t-field="o.document_date"/></p>
+                                   <p><span class="info-label">Forma de Pago:</span> <span t-field="o.payment_method_sat"/></p>
+                               </div>
+                               <div style="display: table-cell; width: 50%; padding-left: 10px; vertical-align: top;">
+                                   <p><span class="info-label">Método de Pago:</span> <span t-field="o.payment_method"/></p>
+                                   <p><span class="info-label">Moneda:</span> <span t-field="o.divisa"/></p>
+                                   <p><span class="info-label">Estado SAT:</span> 
+                                       <span t-field="o.sat_state" 
+                                             style="padding: 3px 8px; border-radius: 3px;"
+                                             t-attf-style="background-color: #{o.sat_state == 'Vigente' and '#28a745' or o.sat_state == 'Cancelado' and '#dc3545' or '#6c757d'}; color: white;"/>
+                                   </p>
+                               </div>
+                           </div>
+                       </div>
+
+                       <!-- Conceptos -->
+                       <div class="cfdi-section">
+                           <div class="cfdi-section-title">
+                               <i class="fa fa-list"/> CONCEPTOS
+                           </div>
+                           <table class="cfdi-table">
+                               <thead>
+                                   <tr>
+                                       <th style="width:5%">Cant.</th>
+                                       <th style="width:8%">Unidad</th>
+                                       <th style="width:10%">Clave SAT</th>
+                                       <th style="width:32%">Descripción</th>
+                                       <th style="width:12%">P. Unitario</th>
+                                       <th style="width:10%">Importe</th>
+                                       <th style="width:10%">Desc.</th>
+                                       <th style="width:13%">Impuestos</th>
+                                   </tr>
+                               </thead>
+                               <tbody>
+                                   <t t-foreach="o.downloaded_product_id" t-as="line">
+                                       <tr>
+                                           <td class="text-right"><t t-esc="'%.2f' % line.quantity"/></td>
+                                           <td><t t-esc="line.product_metrics"/></td>
+                                           <td><t t-esc="line.sat_id.code if line.sat_id else ''"/></td>
+                                           <td><t t-esc="line.description"/></td>
+                                           <td class="text-right"><span t-esc="(o.currency_id.symbol or '$') + ' ' + '{:,.2f}'.format(float(line.unit_value or 0))"/></td>
+                                           <td class="text-right"><span t-esc="(o.currency_id.symbol or '$') + ' ' + '{:,.2f}'.format(float(line.total_amount or 0))"/></td>
+                                           <td class="text-right"><t t-if="line.discount"><span t-esc="(o.currency_id.symbol or '$') + ' ' + '{:,.2f}'.format(float(line.discount or 0))"/></t></td>
+                                           <td style="font-size: 9px;">
+                                               <t t-foreach="line.tax_id" t-as="tax">
+                                                   <div><t t-esc="tax.name"/>: <span t-esc="(o.currency_id.symbol or '$') + ' ' + '{:,.2f}'.format(float(line.total_amount or 0) * float(tax.amount or 0) / 100)"/></div>
+                                               </t>
+                                           </td>
+                                       </tr>
+                                   </t>
+                               </tbody>
+                           </table>
+                       </div>
+
+                       <!-- Totales - Alineados a la derecha -->
+                       <div class="totales-container">
+                           <div class="cfdi-totals">
+                               <table style="width: 100%; border-collapse: collapse; font-size: 11pt;">
+                                   <tr style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                                       <td style="padding: 8px 15px; font-weight: 600; color: #334155; text-align: right;">SUBTOTAL:</td>
+                                       <td style="padding: 8px 15px; font-weight: 600; color: #1e3a8a; text-align: right;"><t t-esc="(o.currency_id.symbol or '$') + ' ' + '{:,.2f}'.format(float(o.sub_total or 0))"/></td>
+                                   </tr>
+                                   <t t-if="o.discount">
+                                       <tr style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                                           <td style="padding: 8px 15px; font-weight: 600; color: #334155; text-align: right;">DESCUENTO:</td>
+                                           <td style="padding: 8px 15px; font-weight: 600; color: #1e3a8a; text-align: right;"><t t-esc="(o.currency_id.symbol or '$') + ' ' + '{:,.2f}'.format(float(o.discount or 0))"/></td>
+                                       </tr>
+                                   </t>
+                                   <tr style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                                       <td style="padding: 8px 15px; font-weight: 600; color: #334155; text-align: right;">IVA TRASLADADO:</td>
+                                       <td style="padding: 8px 15px; font-weight: 600; color: #1e3a8a; text-align: right;"><t t-esc="(o.currency_id.symbol or '$') + ' ' + '{:,.2f}'.format(float(o.total_impuestos or 0))"/></td>
+                                   </tr>
+                                   <t t-if="o.total_retenciones">
+                                       <tr style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+                                           <td style="padding: 8px 15px; font-weight: 600; color: #334155; text-align: right;">RETENCIONES:</td>
+                                           <td style="padding: 8px 15px; font-weight: 600; color: #1e3a8a; text-align: right;"><t t-esc="(o.currency_id.symbol or '$') + ' ' + '{:,.2f}'.format(float(o.total_retenciones or 0))"/></td>
+                                       </tr>
+                                   </t>
+                                   <tr style="background-color: #dbeafe;">
+                                       <td style="padding: 8px 15px; font-weight: bold; color: #1e3a8a; text-align: right;">TOTAL:</td>
+                                       <td style="padding: 8px 15px; font-weight: bold; color: #1e3a8a; text-align: right;"><t t-esc="(o.currency_id.symbol or '$') + ' ' + '{:,.2f}'.format(float(o.amount_total or 0))"/></td>
+                                   </tr>
+                               </table>
+                           </div>
+                       </div>
+
+                       <!-- Sellos Digitales (solo si tienen datos) -->
+                       <t t-if="o.sello_cfdi">
+                           <div class="sello-section">
+                               <div class="sello-title">SELLO DIGITAL DEL CFDI</div>
+                               <div class="sello-content">
+                                   <t t-esc="o.sello_cfdi"/>
+                               </div>
+                           </div>
+                       </t>
+
+                       <t t-if="o.sello_sat">
+                           <div class="sello-section">
+                               <div class="sello-title">SELLO DIGITAL DEL SAT</div>
+                               <div class="sello-content">
+                                   <t t-esc="o.sello_sat"/>
+                               </div>
+                           </div>
+                       </t>
+
+                       <t t-if="o.cadena_original">
+                           <div class="sello-section">
+                               <div class="sello-title">CADENA ORIGINAL DEL COMPLEMENTO DE CERTIFICACIÓN DIGITAL DEL SAT</div>
+                               <div class="sello-content">
+                                   <t t-esc="o.cadena_original"/>
+                               </div>
+                           </div>
+                       </t>
+
+                       <!-- Código QR al final -->
+                       <div class="qr-section">
+                           <div class="qr-title">CÓDIGO QR PARA VERIFICACIÓN</div>
+                           <t t-if="o.qr_code_image">
+                               <div style="text-align: center; margin: 15px 0;">
+                                   <img t-att-src="'data:image/png;base64,' + o.qr_code_image" 
+                                        alt="Código QR" style="width: 200px; height: 200px;"/>
+                               </div>
+                               <div style="margin-top: 10px; font-size: 9px; color: #64748b;">
+                                   Escanee este código para verificar el CFDI en el portal del SAT
+                               </div>
+                           </t>
+                           <t t-if="not o.qr_code_image">
+                               <div style="text-align: center; margin: 15px 0; color: #6c757d;">
+                                   <p>Código QR no disponible</p>
+                               </div>
+                           </t>
+                       </div>
+
+                       <!-- Pie de página informativo -->
+                       <div class="footer-text">
+                           <p style="margin: 0; font-weight: bold;">Este documento es una representación impresa de un CFDI</p>
+                           <p style="margin: 5px 0 0 0;">Puede verificar la autenticidad de este comprobante en: https://verificacfdi.facturaelectronica.sat.gob.mx/</p>
+                       </div>
+                   </div>
+           </t>
+       </t>
+   </template>
+</data>
+</odoo>

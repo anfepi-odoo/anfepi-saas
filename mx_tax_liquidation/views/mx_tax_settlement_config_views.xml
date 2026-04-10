@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ============================================================ -->
+        <!-- VISTA FORM — Configuración por Empresa                        -->
+        <!-- ============================================================ -->
+        <record id="view_mx_tax_settlement_config_form" model="ir.ui.view">
+            <field name="name">mx.tax.settlement.config.form</field>
+            <field name="model">mx.tax.settlement.config</field>
+            <field name="arch" type="xml">
+                <form string="Configuración de Liquidación Fiscal">
+                    <sheet>
+                        <widget name="web_ribbon" title="Archivado" bg_color="text-bg-danger"
+                                invisible="active"/>
+                        <group>
+                            <group string="Empresa y Concepto">
+                                <field name="company_id" options="{'no_create': True}"/>
+                                <field name="tax_concept_id" options="{'no_create': True}"/>
+                                <field name="tax_type" readonly="1"/>
+                                <field name="requires_reclassification" readonly="1"/>
+                                <field name="active" widget="boolean_toggle"/>
+                            </group>
+                            <group string="Parámetros de Control">
+                                <field name="difference_threshold_pct"
+                                       widget="percentage"
+                                       string="Umbral de Diferencia (%)"/>
+                                <field name="require_attachment" widget="boolean_toggle"/>
+                                <field name="settlement_journal_id"
+                                       options="{'no_create': True}"/>
+                            </group>
+                        </group>
+                        <!-- ── Cuentas de Pasivo ───────────────────────────── -->
+                        <div class="alert alert-info" role="alert" style="margin:8px 0">
+                            <strong>Cuentas de Pasivo a Liquidar — ¿Qué va aquí?</strong><br/>
+                            Las cuentas donde se acumula la <em>obligación fiscal</em> a pagar al SAT.
+                            Son cuentas de naturaleza <strong>acreedora (pasivo)</strong>: su saldo
+                            crédito representa la deuda.<br/><br/>
+                            <strong>Ejemplos por tipo de impuesto:</strong><br/>
+                            • <em>IVA por Pagar:</em> 216.01.01 IVA Trasladado por Pagar<br/>
+                            • <em>IVA Retenido:</em> 216.10.20 IVA Retenido a Terceros (exigible)<br/>
+                            • <em>ISR Propio (pagos provisionales):</em> 216.05.01 ISR Provisional<br/>
+                            • <em>ISR Retención Sueldos:</em> 216.02.01 ISR por Enterar (Sueldos)<br/>
+                            • <em>ISR Honorarios / Arrendamiento:</em> 216.04.01 ISR Retención Honorarios
+                        </div>
+                        <group string="Cuentas de Pasivo a Liquidar" col="1">
+                            <field name="liability_account_ids"
+                                   widget="many2many_tags"
+                                   options="{'no_create': True}"
+                                   domain="[('company_ids', 'in', [company_id]), ('active', '=', True)]"/>
+                        </group>
+
+                        <!-- ── Disminuciones a Aplicar ─────────────────────── -->
+                        <div class="alert alert-info" role="alert" style="margin:8px 0">
+                            <strong>Disminuciones a Aplicar — ¿Qué va aquí?</strong><br/>
+                            Cuentas de naturaleza <strong>deudora (activo)</strong> cuyos saldos
+                            <em>reducen</em> la obligación a pagar. En la mayoría de conceptos
+                            este campo va <strong>vacío</strong>.<br/><br/>
+                            <strong>Dos mecanismos distintos (no confundir):</strong><br/><br/>
+                            • <strong>Acreditamiento:</strong> deduce impuesto pagado en compras
+                            del mismo impuesto cobrado en ventas. No requiere trámite SAT.<br/>
+                            <em>Ejemplo — IVA Neto:</em> 118.01.01 IVA Acreditable acredita
+                            <u>solo</u> contra IVA Trasladado (213.01.01).<br/><br/>
+                            • <strong>Disminución por anticipos / retenciones:</strong> reduce
+                            ISR propio con pagos provisionales o retenciones ya enteradas
+                            del <u>mismo</u> impuesto.<br/>
+                            <em>Ejemplo — ISR Propio:</em> 113.02.01 ISR Retenido (a favor)
+                            reduce <u>solo</u> el ISR por Pagar (213.03.01).<br/><br/>
+                            <strong>⚠ Regla fiscal:</strong> cada impuesto solo se reduce con
+                            créditos del <strong>mismo tipo</strong>.
+                            IVA acredita contra IVA; ISR contra ISR.
+                            <strong>Nunca mezcle impuestos distintos en este campo.</strong>
+                        </div>
+                        <group string="Disminuciones a Aplicar (Acreditamientos / Anticipos del mismo impuesto)" col="1">
+                            <field name="compensation_account_ids"
+                                   widget="many2many_tags"
+                                   options="{'no_create': True}"
+                                   domain="[('company_ids', 'in', [company_id]), ('active', '=', True)]"/>
+                        </group>
+
+                        <!-- ── Reclasificación ─────────────────────────────── -->
+                        <div invisible="not requires_reclassification">
+                            <div class="alert alert-warning" role="alert" style="margin:8px 0">
+                                <strong>Reclasificación de Impuesto Retenido — ¿Cuándo aplica?</strong><br/>
+                                Solo cuando Odoo registra la retención en una cuenta <em>transitoria</em>
+                                al pagar la factura del proveedor, y al pagar al SAT esa cuenta debe
+                                reclasificarse a la cuenta de pasivo exigible.<br/><br/>
+                                <strong>Ejemplo IVA Retenido (Fletes / Honorarios):</strong><br/>
+                                • <em>Cuenta Origen (transitoria, retención no pagada al SAT):</em> 216.10.10<br/>
+                                • <em>Cuenta Pasivo a Liquidar (arriba, exigible):</em> 216.10.20<br/>
+                                Al pagar al SAT el sistema cancela 216.10.20 y abona el banco.<br/><br/>
+                                <strong>Ejemplo ISR Honorarios retenido:</strong><br/>
+                                • <em>Cuenta Origen (transitoria):</em> 216.04.01 ISR Honorarios<br/>
+                                • <em>Cuenta Pasivo a Liquidar (arriba):</em> 216.04.02 ISR Honorarios (exigible)
+                            </div>
+                            <group string="Reclasificación de Impuesto Retenido" col="2">
+                                <field name="reclassification_source_account_id"
+                                       string="Cuenta Origen (transitoria, antes del pago al SAT)"
+                                       required="requires_reclassification"
+                                       domain="[('company_ids', 'in', [company_id]), ('active', '=', True)]"
+                                       help="Cuenta donde Odoo registra la retención al pagar la factura del proveedor. Se cancela al liquidar al SAT."/>
+                                <field name="iva_pending_account_id"
+                                       string="Crédito Fiscal Pendiente — activo transitorio (opcional, solo IVA Art. 5)"
+                                       domain="[('company_ids', 'in', [company_id]), ('active', '=', True)]"
+                                       help="Solo IVA retenido (LIVA Art. 5): IVA acreditable que aún no puede deducirse hasta pagar al SAT. Se libera al liquidar. Ej: 118.01.03"/>
+                                <field name="iva_acreditable_account_id"
+                                       string="Crédito Fiscal Definitivo — destino tras pagar al SAT (opcional, solo IVA Art. 5)"
+                                       domain="[('company_ids', 'in', [company_id]), ('active', '=', True)]"
+                                       help="Solo IVA retenido (LIVA Art. 5): cuenta de destino del crédito ya liberado. Ej: 118.01.01"/>
+                            </group>
+                        </div>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- VISTA LIST — Configuraciones                                   -->
+        <!-- ============================================================ -->
+        <record id="view_mx_tax_settlement_config_list" model="ir.ui.view">
+            <field name="name">mx.tax.settlement.config.list</field>
+            <field name="model">mx.tax.settlement.config</field>
+            <field name="arch" type="xml">
+                <list string="Configuraciones de Liquidación Fiscal"
+                      decoration-muted="active == False">
+                    <field name="company_id" column_invisible="1"/>
+                    <field name="tax_concept_id"/>
+                    <field name="tax_type"/>
+                    <field name="liability_account_ids" widget="many2many_tags"/>
+                    <field name="compensation_account_ids" widget="many2many_tags" string="Disminuciones a Aplicar"/>
+                    <field name="difference_threshold_pct" widget="percentage" string="Umbral %"/>
+                    <field name="require_attachment"/>
+                    <field name="active" column_invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- ACCIÓN — Configuraciones                                       -->
+        <!-- ============================================================ -->
+        <record id="action_mx_tax_settlement_config" model="ir.actions.act_window">
+            <field name="name">Configuración de Liquidaciones Fiscales</field>
+            <field name="res_model">mx.tax.settlement.config</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'active_test': False}</field>
+            <!-- Odoo 19: groups_id eliminado de ir.actions; acceso controlado en menus.xml -->
+        </record>
+    </data>
+</odoo>
