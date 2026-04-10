@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    
+    <!-- Vista de Formulario para Drill-down -->
+    <record id="sat_conciliation_report_view_form" model="ir.ui.view">
+        <field name="name">sat.conciliation.report.view.form</field>
+        <field name="model">sat.conciliation.report</field>
+        <field name="arch" type="xml">
+            <form string="Detalle de Conciliación" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_sat_xmls" type="object" 
+                                class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="sat_xml_count == 0">
+                            <field name="sat_xml_count" widget="statinfo" string="XMLs SAT"/>
+                        </button>
+                        <button name="action_view_odoo_invoices" type="object" 
+                                class="oe_stat_button" icon="fa-file-text"
+                                invisible="odoo_invoice_count == 0">
+                            <field name="odoo_invoice_count" widget="statinfo" string="Facturas"/>
+                        </button>
+                        <button name="action_view_odoo_payments" type="object" 
+                                class="oe_stat_button" icon="fa-money"
+                                invisible="odoo_payment_count == 0">
+                            <field name="odoo_payment_count" widget="statinfo" string="Pagos"/>
+                        </button>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="display_name_custom"/>
+                            <field name="document_type"/>
+                            <field name="section_type"/>
+                        </group>
+                        <group>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Cantidades y Montos">
+                        <group string="SAT">
+                            <field name="qty_sat"/>
+                            <field name="amount_sat"/>
+                        </group>
+                        <group string="Odoo">
+                            <field name="qty_odoo"/>
+                            <field name="amount_odoo"/>
+                        </group>
+                        <group string="Ignorados">
+                            <field name="qty_ignored"/>
+                            <field name="amount_ignored"/>
+                        </group>
+                        <group string="Diferencias">
+                            <field name="diff_qty"/>
+                            <field name="diff_amount"/>
+                            <field name="diff_percentage" widget="percentage"/>
+                        </group>
+                    </group>
+                    
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

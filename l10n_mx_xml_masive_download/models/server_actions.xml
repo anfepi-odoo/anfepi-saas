@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data>
+        <record id="model_account_move_action_relate" model="ir.actions.server">
+            <field name="name">Relate Invoice to XML</field>
+            <field name="model_id" ref="model_account_move"/>
+            <field name="binding_model_id" ref="model_account_move"/>
+            <field name="binding_view_types">form</field>
+            <field name="state">code</field>
+            <field name="code">records.relate_download()</field>
+        </record>
+
+        <record id="model_account_edi_downloaded_xml_sat_action_relate" model="ir.actions.server">
+            <field name="name">Relate XML to Invoice</field>
+            <field name="model_id" ref="model_account_edi_downloaded_xml_sat"/>
+            <field name="binding_model_id" ref="model_account_edi_downloaded_xml_sat"/>
+            <field name="binding_view_types">form</field>
+            <field name="state">code</field>
+            <field name="code">records.relate_download()</field>
+        </record>
+
+        <!-- Acción de servidor: Actualizar Lotes Importador XML SAT -->
+        <record id="action_update_selected_batches" model="ir.actions.server">
+            <field name="name">Actualizar Lotes Importador XML SAT</field>
+            <field name="model_id" ref="model_account_edi_api_download"/>
+            <field name="binding_model_id" ref="model_account_edi_api_download"/>
+            <field name="binding_view_types">list,form</field>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    total = len(records)
+    batch_names = ', '.join(records.mapped('name'))
+    errors = []
+    success_count = 0
+    
+    # Procesar con commit cada N registros para evitar timeout
+    for idx, batch in enumerate(records, 1):
+        try:
+            _logger.info(f"Procesando lote {idx}/{total}: {batch.name}")
+            
+            # Contar XMLs antes de actualizar
+            xml_count_before = len(batch.xml_sat_ids)
+            
+            batch.with_context(prefetch_fields=False).action_download()
+            
+            # Contar XMLs después de actualizar
+            xml_count_after = len(batch.xml_sat_ids)
+            nuevos_xmls = xml_count_after - xml_count_before
+            
+            _logger.info(f"✅ Lote {batch.name}: {nuevos_xmls} XMLs nuevos ({xml_count_before} → {xml_count_after})")
+            success_count += 1
+            
+            # Commit cada lote para evitar perder progreso
+            if idx % 1 == 0:
+                env.cr.commit()
+                
+        except Exception as e:
+            error_msg = f"{batch.name}: {str(e)[:100]}"
+            _logger.error(f"❌ Error actualizando lote {batch.name}: {str(e)}")
+            errors.append(error_msg)
+            continue
+    
+    # Mensaje final usando notificación en lugar de UserError
+    if errors:
+        message = f"⚠️ Procesados {success_count}/{total} lotes exitosamente.\n\n"
+        message += f"Errores en {len(errors)} lote(s):\n" + "\n".join(errors[:3])
+        if len(errors) > 3:
+            message += f"\n... y {len(errors)-3} más. Ver logs."
+        notification_type = 'warning'
+    else:
+        message = f"✅ Se han procesado {total} lote(s) exitosamente:\n{batch_names}\n\n"
+        message += "ℹ️ Si no ves XMLs nuevos, puede ser:\n"
+        message += "• No hay XMLs nuevos en el periodo\n"
+        message += "• Error 301 del SAT en facturas RECIBIDAS (problema conocido)\n"
+        message += "• XMLs ya fueron importados previamente\n\n"
+        message += "💡 Para facturas recibidas, usa 'Subir XMLs Manual desde zip'"
+        notification_type = 'success'
+    
+    action = {
+        'type': 'ir.actions.client',
+        'tag': 'display_notification',
+        'params': {
+            'title': 'Actualización de Lotes Completada',
+            'message': message,
+            'type': notification_type,
+            'sticky': True,
+            'next': {'type': 'ir.actions.act_window_close'},
+        }
+    }
+            </field>
+        </record>
+
+        <!-- ================================================================ -->
+        <!-- NUEVA ACCIÓN: Buscar Documentos Origen (NO AFECTA EXISTENTES) -->
+        <!-- ================================================================ -->
+        <record id="action_server_search_origin_documents" model="ir.actions.server">
+            <field name="name">🔍 Buscar Documentos Origen</field>
+            <field name="model_id" ref="account.model_account_move_line"/>
+            <field name="binding_model_id" ref="account.model_account_move_line"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    action = records.action_search_origin_document()
+            </field>
+        </record>
+        
+        <!-- Acción para XMLs Descargados -->
+        <record id="action_server_search_origin_downloaded_xml" model="ir.actions.server">
+            <field name="name">🔍 Buscar Documentos Origen</field>
+            <field name="model_id" ref="model_account_edi_downloaded_xml_sat"/>
+            <field name="binding_model_id" ref="model_account_edi_downloaded_xml_sat"/>
+            <field name="binding_view_types">list</field>
+            <field name="state">code</field>
+            <field name="code">
+if records:
+    action = records.action_search_origin_document()
+            </field>
+        </record>
+    </data>
+
+</odoo>

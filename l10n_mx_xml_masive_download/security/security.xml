@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="group_l10n_mx_xml_sat_user" model="res.groups">
+            <field name="name">Acceso a Descarga XML del SAT</field>
+            <field name="comment">Grupo independiente para usuarios que pueden descargar e importar XMLs del SAT. No requiere permisos de contabilidad.</field>
+        </record>
+    </data>
+</odoo>

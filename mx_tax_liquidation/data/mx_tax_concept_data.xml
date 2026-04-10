@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- ============================================================ -->
+        <!-- CATÁLOGO DE CONCEPTOS FISCALES SAT — MÉXICO                   -->
+        <!-- Datos iniciales — no modificar values, solo agregar nuevos    -->
+        <!-- ============================================================ -->
+
+        <!-- ISR PROPIO (Pago Provisional Persona Moral) -->
+        <record id="concept_isr_propio" model="mx.tax.concept">
+            <field name="name">ISR por Pagar (Pago Provisional)</field>
+            <field name="code">ISR_PROPIO</field>
+            <field name="sequence">10</field>
+            <field name="tax_type">isr</field>
+            <field name="nature">liability</field>
+            <field name="requires_reclassification" eval="False"/>
+            <field name="description">
+                Impuesto Sobre la Renta por pagar correspondiente al pago provisional
+                mensual de la persona moral. Artículo 14 LISR.
+            </field>
+        </record>
+
+        <!-- IVA POR PAGAR NETO -->
+        <record id="concept_iva_pagar" model="mx.tax.concept">
+            <field name="name">IVA por Pagar (Neto)</field>
+            <field name="code">IVA_PAGAR</field>
+            <field name="sequence">20</field>
+            <field name="tax_type">iva</field>
+            <field name="nature">liability</field>
+            <field name="requires_reclassification" eval="False"/>
+            <field name="description">
+                IVA trasladado cobrado a clientes menos IVA acreditable pagado a proveedores.
+                El módulo lee el saldo contable de las cuentas configuradas.
+                Tasa general 16%, tasa fronteriza 8%. Artículo 1 LIVA.
+            </field>
+        </record>
+
+        <!-- IVA RETENIDO A TERCEROS -->
+        <record id="concept_iva_retenido" model="mx.tax.concept">
+            <field name="name">IVA Retenido a Terceros</field>
+            <field name="code">IVA_RET</field>
+            <field name="sequence">30</field>
+            <field name="tax_type">iva</field>
+            <field name="nature">liability</field>
+            <field name="requires_reclassification" eval="True"/>
+            <field name="description">
+                IVA retenido a proveedores de servicios (personas físicas con actividad
+                empresarial, honorarios, arrendamiento). Se reclasifica al pagar.
+                Artículo 1-A LIVA.
+            </field>
+        </record>
+
+        <!-- RETENCIÓN ISR SALARIOS -->
+        <record id="concept_ret_salarios" model="mx.tax.concept">
+            <field name="name">Retención ISR — Sueldos y Salarios</field>
+            <field name="code">RET_SAL</field>
+            <field name="sequence">40</field>
+            <field name="tax_type">retencion</field>
+            <field name="nature">liability</field>
+            <field name="requires_reclassification" eval="False"/>
+            <field name="description">
+                ISR retenido a trabajadores con relación laboral bajo el Capítulo I del
+                Título IV LISR. Declaración mensual en DIOT y pagos definitivos.
+            </field>
+        </record>
+
+        <!-- RETENCIÓN ISR ASIMILADOS A SALARIOS -->
+        <record id="concept_ret_asimilados" model="mx.tax.concept">
+            <field name="name">Retención ISR — Asimilados a Salarios</field>
+            <field name="code">RET_ASIM</field>
+            <field name="sequence">50</field>
+            <field name="tax_type">retencion</field>
+            <field name="nature">liability</field>
+            <field name="requires_reclassification" eval="False"/>
+            <field name="description">
+                ISR retenido a personas físicas que perciben ingresos asimilados a
+                salarios. Artículo 94 LISR. Incluye honorarios a consejeros,
+                comisionistas y accionistas.
+            </field>
+        </record>
+
+        <!-- RETENCIÓN ISR HONORARIOS / RESICO -->
+        <record id="concept_ret_honorarios" model="mx.tax.concept">
+            <field name="name">Retención ISR — Honorarios / RESICO</field>
+            <field name="code">RET_HON</field>
+            <field name="sequence">60</field>
+            <field name="tax_type">retencion</field>
+            <field name="nature">liability</field>
+            <field name="requires_reclassification" eval="False"/>
+            <field name="description">
+                ISR retenido a personas físicas que prestan servicios profesionales
+                independientes (honorarios). Aplica cuando la empresa es retenedora.
+                Artículo 106 y 113-E (RESICO) LISR. Tasa: 10%.
+            </field>
+        </record>
+
+        <!-- RETENCIÓN ISR ARRENDAMIENTO -->
+        <record id="concept_ret_arrendamiento" model="mx.tax.concept">
+            <field name="name">Retención ISR — Arrendamiento</field>
+            <field name="code">RET_ARR</field>
+            <field name="sequence">70</field>
+            <field name="tax_type">retencion</field>
+            <field name="nature">liability</field>
+            <field name="requires_reclassification" eval="False"/>
+            <field name="description">
+                ISR retenido a personas físicas arrendadoras de inmuebles cuando
+                la empresa es persona moral arrendataria. Artículo 116 LISR. Tasa: 10%.
+            </field>
+        </record>
+
+        <!-- RETENCIÓN ISR DIVIDENDOS -->
+        <record id="concept_ret_dividendos" model="mx.tax.concept">
+            <field name="name">Retención ISR — Dividendos</field>
+            <field name="code">RET_DIV</field>
+            <field name="sequence">80</field>
+            <field name="tax_type">retencion</field>
+            <field name="nature">liability</field>
+            <field name="requires_reclassification" eval="False"/>
+            <field name="description">
+                ISR retenido en distribución de dividendos o utilidades.
+                Artículo 140 LISR. Tasa adicional del 10% sobre dividendos distribuidos
+                de utilidades generadas a partir de 2014 (no CUFIN).
+            </field>
+        </record>
+    </data>
+</odoo>

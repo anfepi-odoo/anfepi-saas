@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from odoo import Command
 
 _logger = logging.getLogger(__name__)
 
@@ -8,7 +9,7 @@ ACCOUNT_NAME = 'ISR A Favor'
 ACCOUNT_TYPE = 'asset_current'
 
 
-def post_init_hook(cr, registry):
+def post_init_hook(env):
     """
     1. Crea la cuenta contable 113.02.01 ISR A Favor para cada compañía
        que use la localización mexicana y no la tenga definida.
@@ -18,36 +19,29 @@ def post_init_hook(cr, registry):
     3. Registra en el log los asientos que aún queden descuadrados para
        revisión manual.
     """
-    from odoo import api, SUPERUSER_ID
+    # Buscar compañías que usen la localización mexicana (v17+: chart_template es Char)
+    companies = env['res.company'].search([('chart_template', '=', 'mx')])
 
-    env = api.Environment(cr, SUPERUSER_ID, {})
-
-    # Buscar compañías que usen la localización mexicana
-    mx_chart = env.ref('l10n_mx.mx_coa', raise_if_not_found=False)
-
-    if mx_chart:
-        companies = env['res.company'].search([
-            ('chart_template_id', '=', mx_chart.id)
-        ])
-    else:
+    if not companies:
         companies = env['res.company'].search([])
         _logger.warning(
-            'anfepi_account_fix: No se encontró el template l10n_mx.mx_coa. '
+            'anfepi_account_fix: No se encontraron compañías con localización '
+            'mexicana (chart_template=mx). '
             'Se intentará crear la cuenta en todas las compañías activas.'
         )
 
     if not companies:
         _logger.warning(
-            'anfepi_account_fix: No se encontraron compañías con localización '
-            'mexicana. Verificar configuración.'
+            'anfepi_account_fix: No se encontraron compañías activas. '
+            'Verificar configuración.'
         )
         return
 
     for company in companies:
         account = _create_or_get_isr_account(env, company)
         if account:
-            _fix_orphan_move_lines(cr, env, account, company)
-            _fix_unbalanced_moves(cr, env, account, company)
+            _fix_orphan_move_lines(env, account, company)
+            _fix_unbalanced_moves(env, account, company)
 
 
 # ---------------------------------------------------------------------------
@@ -58,10 +52,12 @@ def _create_or_get_isr_account(env, company):
     """
     Devuelve la cuenta 113.02.01, creándola si no existe todavía.
     Retorna el recordset account.account.
+    En v18+, account.account usa company_ids (M2M) en lugar de company_id,
+    y el código es company_dependent, por lo que se requiere with_company().
     """
-    existing = env['account.account'].search([
+    existing = env['account.account'].with_company(company).search([
         ('code', '=', ACCOUNT_CODE),
-        ('company_id', '=', company.id),
+        ('company_ids', '=', company.id),
     ], limit=1)
 
     if existing:
@@ -72,30 +68,17 @@ def _create_or_get_isr_account(env, company):
         )
         return existing
 
-    # Buscar el grupo contable más específico para 113.02.01
-    group = env['account.group'].search([
-        ('code_prefix_start', '<=', ACCOUNT_CODE),
-        ('code_prefix_end', '>=', ACCOUNT_CODE),
-        ('company_id', '=', company.id),
-    ], limit=1, order='code_prefix_start desc')
-
-    if not group:
-        group = env['account.group'].search([
-            ('code_prefix_start', 'like', '113'),
-            ('company_id', '=', company.id),
-        ], limit=1)
-
+    # En v18+ group_id es computed automáticamente por prefijo de código;
+    # no se necesita buscarlo ni pasarlo en el create.
     vals = {
         'code': ACCOUNT_CODE,
         'name': ACCOUNT_NAME,
         'account_type': ACCOUNT_TYPE,
-        'company_id': company.id,
+        'company_ids': [Command.link(company.id)],
         'reconcile': False,
     }
-    if group:
-        vals['group_id'] = group.id
 
-    new_account = env['account.account'].create(vals)
+    new_account = env['account.account'].with_company(company).create(vals)
     _logger.info(
         'anfepi_account_fix: Cuenta "%s %s" creada (id=%d) '
         'para la compañía "%s".',
@@ -108,20 +91,17 @@ def _create_or_get_isr_account(env, company):
 # Reparación de líneas huérfanas
 # ---------------------------------------------------------------------------
 
-def _fix_orphan_move_lines(cr, env, account, company):
+def _fix_orphan_move_lines(env, account, company):
     """
     Busca líneas de asiento (account.move.line) cuyo account_id ya no
     existe en account_account y las reasigna a la cuenta ISR A Favor.
 
-    Odoo 16 tiene una constraint PostgreSQL que exige:
-      display_type NOT IN ('line_section','line_note')
-      OR (account_id IS NULL AND debit=0 AND credit=0 AND amount_currency=0)
-
-    Por eso se filtra siempre por:
+    Se filtra por:
       - COALESCE(display_type,'') NOT IN ('line_section','line_note')
       - (debit != 0 OR credit != 0 OR amount_currency != 0)
     para tocar sólo líneas contables con movimiento real.
     """
+    cr = env.cr
     ACCOUNTING_FILTER = """
         COALESCE(display_type, '') NOT IN ('line_section', 'line_note')
         AND (debit != 0 OR credit != 0 OR amount_currency != 0)
@@ -193,7 +173,7 @@ def _fix_orphan_move_lines(cr, env, account, company):
 # Reparación e inserción de líneas faltantes en asientos descuadrados
 # ---------------------------------------------------------------------------
 
-def _fix_unbalanced_moves(cr, env, account, company):
+def _fix_unbalanced_moves(env, account, company):
     """
     Detecta asientos registrados (state=posted) cuyos débitos ≠ créditos.
     Para cada uno inserta una línea compensatoria en la cuenta 113.02.01
@@ -204,6 +184,7 @@ def _fix_unbalanced_moves(cr, env, account, company):
       diff > 0  → suma de débitos supera créditos → falta línea de CRÉDITO
       diff < 0  → suma de créditos supera débitos → falta línea de DÉBITO
     """
+    cr = env.cr
     cr.execute("""
         SELECT
             am.id          AS move_id,
@@ -247,15 +228,13 @@ def _fix_unbalanced_moves(cr, env, account, company):
                 date, name,
                 debit, credit, balance,
                 amount_currency, currency_id,
-                parent_state, sequence,
-                display_type
+                parent_state, sequence
             ) VALUES (
                 %s, %s, %s, %s,
                 %s, %s,
                 %s, %s, %s,
                 %s, %s,
-                'posted', 999,
-                'product'
+                'posted', 999
             )
         """, (
             move_id, company.id, account.id, journal_id,

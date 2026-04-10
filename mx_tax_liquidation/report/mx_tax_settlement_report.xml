@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ============================================================ -->
+        <!-- ACCIÓN DE REPORTE — Liquidación Individual                    -->
+        <!-- ============================================================ -->
+        <record id="action_report_mx_tax_settlement" model="ir.actions.report">
+            <field name="name">Liquidación de Obligaciones Fiscales</field>
+            <field name="model">mx.tax.settlement</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">mx_tax_liquidation.report_mx_tax_settlement_document</field>
+            <field name="report_file">mx_tax_liquidation.report_mx_tax_settlement_document</field>
+            <field name="binding_model_id" ref="model_mx_tax_settlement"/>
+            <field name="binding_type">report</field>
+            <field name="paperformat_id" ref="base.paperformat_euro"/>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- TEMPLATE QWEB — Liquidación Individual                        -->
+        <!-- ============================================================ -->
+        <template id="report_mx_tax_settlement_document">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="web.external_layout">
+                        <div class="page">
+                            <!-- ENCABEZADO DEL DOCUMENTO -->
+                            <div class="row">
+                                <div class="col-6">
+                                    <h2>Liquidación de Obligaciones Fiscales</h2>
+                                    <h3 class="text-muted">
+                                        <span t-field="o.period_display"/> —
+                                        <span t-field="o.name"/>
+                                    </h3>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <div class="badge rounded-pill"
+                                         t-attf-class="text-bg-#{
+                                             'success' if o.state == 'paid' else
+                                             'warning' if o.state in ('confirmed', 'partial') else
+                                             'danger' if o.state == 'cancel' else
+                                             'secondary'
+                                         }">
+                                        <t t-esc="dict(o._fields['state'].selection).get(o.state)"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr/>
+
+                            <!-- DATOS DE IDENTIFICACIÓN -->
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td><strong>Empresa:</strong></td>
+                                            <td><span t-field="o.company_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>RFC:</strong></td>
+                                            <td><span t-field="o.company_id.vat"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Período:</strong></td>
+                                            <td><span t-field="o.period_display"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Fecha de Corte:</strong></td>
+                                            <td>
+                                                <span t-field="o.calculation_date"
+                                                      t-options="{'widget': 'date'}"/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-6">
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td><strong>Folio:</strong></td>
+                                            <td><span t-field="o.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Responsable:</strong></td>
+                                            <td><span t-field="o.responsible_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Referencia SAT:</strong></td>
+                                            <td><span t-field="o.sat_reference"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Confirmado por:</strong></td>
+                                            <td><span t-field="o.confirmation_uid.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Fecha Confirmación:</strong></td>
+                                            <td>
+                                                <span t-field="o.confirmation_date"
+                                                      t-options="{'widget': 'datetime'}"/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- TABLA DE CONCEPTOS FISCALES -->
+                            <h4 class="mt-4">Conceptos Fiscales</h4>
+                            <table class="table table-sm table-striped table-bordered">
+                                <thead>
+                                    <tr class="table-dark">
+                                        <th>Concepto</th>
+                                        <th class="text-end">Saldo Pasivo</th>
+                                        <th class="text-end">Compensación</th>
+                                        <th class="text-end">Determinado</th>
+                                        <th class="text-end">A Pagar</th>
+                                        <th class="text-end">Pagado</th>
+                                        <th class="text-end">Pendiente</th>
+                                        <th class="text-center">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.line_ids" t-as="line">
+                                        <tr t-attf-class="#{
+                                            'table-success' if line.line_state == 'paid' else
+                                            'table-warning' if line.line_state == 'partial' else
+                                            'table-secondary' if line.line_state in ('deferred', 'zero') else
+                                            ''
+                                        }">
+                                            <td>
+                                                <strong t-field="line.tax_concept_id.name"/>
+                                                <t t-if="line.is_deferred">
+                                                    <br/><small class="text-muted">(Diferida)</small>
+                                                </t>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.balance_liability"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.balance_compensation"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.amount_determined"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.amount_to_pay"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.amount_paid"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-field="line.amount_pending"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-esc="dict(line._fields['line_state'].selection).get(line.line_state)"/>
+                                            </td>
+                                        </tr>
+                                        <t t-if="line.difference_justification">
+                                            <tr>
+                                                <td colspan="8" class="text-muted ps-4">
+                                                    <small>
+                                                        <i>Justificación de diferencia:</i>
+                                                        <span t-field="line.difference_justification"/>
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-dark fw-bold">
+                                        <td><strong>TOTALES</strong></td>
+                                        <td class="text-end"/>
+                                        <td class="text-end"/>
+                                        <td class="text-end">
+                                            <span t-field="o.total_determined"
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-field="o.total_to_pay"
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-field="o.total_paid"
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-field="o.total_pending"
+                                                  t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                        </td>
+                                        <td/>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <!-- TABLA DE PAGOS -->
+                            <t t-if="o.payment_ids">
+                                <h4 class="mt-4">Pagos al SAT</h4>
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr class="table-dark">
+                                            <th>Fecha</th>
+                                            <th>Banco</th>
+                                            <th>Referencia Bancaria</th>
+                                            <th>Modo</th>
+                                            <th class="text-end">Monto</th>
+                                            <th>Asiento</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="o.payment_ids" t-as="pay">
+                                            <tr>
+                                                <td>
+                                                    <span t-field="pay.payment_date"
+                                                          t-options="{'widget': 'date'}"/>
+                                                </td>
+                                                <td>
+                                                    <span t-field="pay.bank_account_id.acc_number"/>
+                                                </td>
+                                                <td><span t-field="pay.bank_reference"/></td>
+                                                <td>
+                                                    <span t-esc="dict(pay._fields['distribution_mode'].selection).get(pay.distribution_mode)"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-field="pay.amount_total"
+                                                          t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                                </td>
+                                                <td><span t-field="pay.move_id.name"/></td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <!-- FIRMAS -->
+                            <div class="row mt-5">
+                                <div class="col-5 text-center">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px;">
+                                        <span t-field="o.responsible_id.name"/>
+                                        <br/><small>Contador Responsable</small>
+                                    </div>
+                                </div>
+                                <div class="col-2"/>
+                                <div class="col-5 text-center">
+                                    <div style="border-top: 1px solid #000; padding-top: 5px;">
+                                        <span t-field="o.confirmation_uid.name"/>
+                                        <br/><small>Confirmado por</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PIE DE PÁGINA INFORMATIVO -->
+                            <div class="mt-4 text-muted text-center" style="font-size:10px;">
+                                Documento generado el
+                                <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y %H:%M')"/>
+                                | <span t-field="o.company_id.name"/> |
+                                Confidencial — Solo para uso interno.
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

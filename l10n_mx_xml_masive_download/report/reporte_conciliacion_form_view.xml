@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista Form del Reporte de Conciliación con Smart Buttons -->
+    <record id="sat_conciliation_report_form_view" model="ir.ui.view">
+        <field name="name">sat.conciliation.report.form</field>
+        <field name="model">sat.conciliation.report</field>
+        <field name="arch" type="xml">
+            <form string="Detalle Conciliación SAT vs Odoo" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <!-- Smart Button: XMLs SAT -->
+                        <button name="action_view_sat_xmls" 
+                                type="object" 
+                                string="XMLs SAT" 
+                                class="oe_stat_button" 
+                                icon="fa-file-text"
+                                invisible="sat_xml_count == 0">
+                            <field name="sat_xml_count" widget="statinfo" string="XMLs"/>
+                        </button>
+                        
+                        <!-- Smart Button: Facturas Odoo -->
+                        <button name="action_view_odoo_invoices" 
+                                type="object"
+                                string="Facturas" 
+                                class="oe_stat_button" 
+                                icon="fa-pencil-square-o"
+                                invisible="odoo_invoice_count == 0">
+                            <field name="odoo_invoice_count" widget="statinfo" string="Facturas"/>
+                        </button>
+                        
+                        <!-- Smart Button: Pagos Odoo -->
+                        <button name="action_view_odoo_payments" 
+                                type="object"
+                                string="Pagos" 
+                                class="oe_stat_button" 
+                                icon="fa-money"
+                                invisible="odoo_payment_count == 0">
+                            <field name="odoo_payment_count" widget="statinfo" string="Pagos"/>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="concepto" readonly="1"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group string="Información General">
+                            <field name="document_type" readonly="1"/>
+                            <field name="section_type" readonly="1"/>
+                            <field name="start_date" readonly="1"/>
+                            <field name="end_date" readonly="1"/>
+                            <field name="company_id" readonly="1" groups="base.group_multi_company"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        
+                        <group string="Indicadores">
+                            <field name="is_header" readonly="1"/>
+                            <field name="is_total" readonly="1"/>
+                            <field name="is_subtotal" readonly="1"/>
+                            <field name="is_separator" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Datos SAT" name="sat_data">
+                            <group>
+                                <group string="Cantidades SAT">
+                                    <field name="qty_sat" readonly="1"/>
+                                    <field name="amount_sat" readonly="1" widget="monetary"/>
+                                </group>
+                                <group string="Ignorados">
+                                    <field name="qty_ignored" readonly="1"/>
+                                    <field name="amount_ignored" readonly="1" widget="monetary"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Datos Odoo" name="odoo_data">
+                            <group>
+                                <group string="Cantidades Odoo">
+                                    <field name="qty_odoo" readonly="1"/>
+                                    <field name="amount_odoo" readonly="1" widget="monetary"/>
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <page string="Diferencias" name="differences">
+                            <group>
+                                <group string="Variaciones">
+                                    <field name="diff_qty" readonly="1" 
+                                           decoration-success="diff_qty == 0"
+                                           decoration-warning="diff_qty != 0"/>
+                                    <field name="diff_amount" readonly="1" widget="monetary"
+                                           decoration-success="diff_amount == 0"
+                                           decoration-warning="diff_amount != 0"/>
+                                    <field name="diff_percentage" readonly="1" widget="percentage"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Estado de Conciliación">
+                                    <div invisible="diff_qty != 0">
+                                        <span class="badge badge-success">✓ Cantidad Conciliada</span>
+                                    </div>
+                                    <div invisible="diff_qty == 0">
+                                        <span class="badge badge-warning">⚠ Diferencia en Cantidad</span>
+                                    </div>
+                                    <div invisible="diff_amount != 0">
+                                        <span class="badge badge-success">✓ Importe Conciliado</span>
+                                    </div>
+                                    <div invisible="diff_amount == 0">
+                                        <span class="badge badge-warning">⚠ Diferencia en Importe</span>
+                                    </div>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

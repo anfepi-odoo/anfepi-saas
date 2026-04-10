@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ============================================================ -->
+        <!-- VISTA FORM — Wizard de Pago al SAT                            -->
+        <!-- ============================================================ -->
+        <record id="view_mx_tax_settlement_pay_wizard_form" model="ir.ui.view">
+            <field name="name">mx.tax.settlement.pay.wizard.form</field>
+            <field name="model">mx.tax.settlement.pay.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Registrar Pago al SAT">
+                    <sheet>
+                        <div class="alert alert-info" role="alert">
+                            <strong>Liquidación:</strong>
+                            <field name="settlement_id" readonly="1" nolabel="1"
+                                   class="oe_inline"/>
+                            &amp;nbsp;|&amp;nbsp;
+                            <strong>Período:</strong>
+                            <field name="period_display" readonly="1" nolabel="1"
+                                   class="oe_inline"/>
+                            &amp;nbsp;|&amp;nbsp;
+                            <strong>Pendiente:</strong>
+                            <field name="total_pending" readonly="1" nolabel="1"
+                                   widget="monetary" class="oe_inline"
+                                   options="{'currency_field': 'currency_id'}"/>
+                        </div>
+
+                        <group>
+                            <group string="Datos del Pago">
+                                <field name="payment_date"/>
+                                <field name="amount_total"
+                                       widget="monetary"
+                                       options="{'currency_field': 'currency_id'}"/>
+                                <field name="distribution_mode"/>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="is_balanced" invisible="1"/>
+                            </group>
+                            <group string="Datos Bancarios">
+                                <field name="company_id" invisible="1"/>
+                                <field name="bank_account_id"
+                                       options="{'no_create': True}"/>
+                                <field name="bank_reference"/>
+                                <field name="sat_reference"
+                                       placeholder="Ej. 26038000000000123456"/>
+                            </group>
+                        </group>
+
+                        <!-- Alerta de cuadre -->
+                        <div class="alert alert-danger"
+                             role="alert"
+                             invisible="is_balanced">
+                            <i class="fa fa-exclamation-triangle" title="Atención"/> La distribución no está cuadrada.
+                            Diferencia: <field name="amount_diff" nolabel="1" widget="monetary"
+                                               class="oe_inline"
+                                               options="{'currency_field': 'currency_id'}"/>
+                        </div>
+                        <div class="alert alert-success"
+                             role="alert"
+                             invisible="not is_balanced">
+                            <i class="fa fa-check-circle" title="OK"/> Distribución cuadrada correctamente.
+                            Total distribuido:
+                            <field name="amount_distributed" nolabel="1" widget="monetary"
+                                   class="oe_inline"
+                                   options="{'currency_field': 'currency_id'}"/>
+                        </div>
+
+                        <!-- Distribución por concepto -->
+                        <field name="line_ids">
+                            <list editable="bottom"
+                                  decoration-success="is_fully_covered == True"
+                                  decoration-warning="amount_applied &gt; 0 and is_fully_covered == False">
+                                <field name="tax_concept_name" readonly="1" string="Concepto"/>
+                                <field name="amount_pending" string="Pendiente"/>
+                                <field name="amount_applied" string="Monto a Aplicar"
+                                       readonly="wizard_id.distribution_mode == 'auto'"/>
+                                <field name="is_fully_covered" readonly="1" string="Cubierto"/>
+                                <field name="settlement_line_id" column_invisible="1"/>
+                                <field name="currency_id" column_invisible="1"/>
+                                <field name="wizard_id" column_invisible="1"/>
+                            </list>
+                        </field>
+                    </sheet>
+                    <footer>
+                        <button name="action_confirm"
+                                string="Confirmar Pago y Generar Asiento"
+                                type="object"
+                                class="btn-primary"
+                                invisible="not is_balanced"/>
+                        <button string="Cancelar"
+                                class="btn-secondary"
+                                special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

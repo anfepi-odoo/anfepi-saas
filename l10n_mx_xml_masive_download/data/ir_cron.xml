@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<odoo>
+    <data>
+
+        <record id="ir_cron_update_sat_state" model="ir.cron">
+            <field name="name">Actualización automatica de estado sat</field>
+            <field name="model_id" ref="model_account_edi_downloaded_xml_sat"/>
+            <field name="state">code</field>
+            <field name="code">
+    env['account.edi.downloaded.xml.sat'].cron_fetch_sat_status()
+            </field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+            <field name="nextcall" eval="(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d 03:00:00')"/>
+        </record>
+
+        <record id="ir_cron_update_art69b_status" model="ir.cron">
+            <field name="name">Actualización automática Art 69-B</field>
+            <field name="model_id" ref="model_account_edi_downloaded_xml_sat"/>
+            <field name="state">code</field>
+            <field name="code">
+date_limit = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+xmls = model.search([
+    ('cfdi_type', '=', 'recibidos'),
+    ('fecha', '>=', date_limit)
+])
+if xmls:
+    updated, not_found = xmls._update_69b_statuses()
+    _logger.info('Art 69-B: Procesados %s XMLs - Actualizados: %s, No encontrados: %s', len(xmls), updated, not_found)
+else:
+    _logger.info('Art 69-B: No se encontraron XMLs recibidos desde %s', date_limit)
+            </field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="active" eval="True"/>
+            <field name="nextcall" eval="(datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d 04:00:00')"/>
+        </record>
+     </data>
+</odoo>

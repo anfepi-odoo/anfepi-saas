@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ============================================================ -->
+        <!-- MENÚ PRINCIPAL: bajo Contabilidad                             -->
+        <!-- ============================================================ -->
+        <menuitem id="menu_mx_tax_liquidation_root"
+                  name="Liquidación Fiscal"
+                  parent="account.menu_finance_entries"
+                  sequence="90"
+                  groups="mx_tax_liquidation.group_tax_settlement_user"/>
+
+        <!-- Liquidaciones -->
+        <menuitem id="menu_mx_tax_settlement"
+                  name="Liquidaciones Fiscales"
+                  parent="menu_mx_tax_liquidation_root"
+                  action="action_mx_tax_settlement"
+                  sequence="10"
+                  groups="mx_tax_liquidation.group_tax_settlement_user"/>
+
+        <!-- Auditoría -->
+        <menuitem id="menu_mx_tax_settlement_log"
+                  name="Bitácora de Auditoría"
+                  parent="menu_mx_tax_liquidation_root"
+                  action="action_mx_tax_settlement_log"
+                  sequence="20"
+                  groups="mx_tax_liquidation.group_tax_settlement_manager"/>
+
+        <!-- ============================================================ -->
+        <!-- MENÚ DE CONFIGURACIÓN: bajo Contabilidad > Configuración     -->
+        <!-- ============================================================ -->
+        <menuitem id="menu_mx_tax_liquidation_config_root"
+                  name="Liquidación Fiscal"
+                  parent="account.menu_finance_configuration"
+                  sequence="90"
+                  groups="mx_tax_liquidation.group_tax_settlement_config"/>
+
+        <!-- Configuraciones por empresa -->
+        <menuitem id="menu_mx_tax_settlement_config"
+                  name="Configuración de Cuentas Fiscales"
+                  parent="menu_mx_tax_liquidation_config_root"
+                  action="action_mx_tax_settlement_config"
+                  sequence="10"
+                  groups="mx_tax_liquidation.group_tax_settlement_config"/>
+
+        <!-- Catálogo de conceptos -->
+        <menuitem id="menu_mx_tax_concept"
+                  name="Conceptos Fiscales SAT"
+                  parent="menu_mx_tax_liquidation_config_root"
+                  action="action_mx_tax_concept"
+                  sequence="20"
+                  groups="mx_tax_liquidation.group_tax_settlement_config"/>
+    </data>
+</odoo>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Acción de servidor: Revisión Art 69-B para XML seleccionados -->
+    <record id="action_review_69b_selected_xml" model="ir.actions.server">
+        <field name="name">Revisar Art 69-B (seleccionados)</field>
+        <field name="model_id" ref="model_account_edi_downloaded_xml_sat"/>
+        <field name="binding_model_id" ref="model_account_edi_downloaded_xml_sat"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_review_69b()</field>
+        <field name="binding_type">action</field>
+    </record>
+
+    <!-- Acción de servidor: Buscar y relacionar Factura Relacionada para XML seleccionados -->
+    <record id="action_search_related_invoice_selected_xml" model="ir.actions.server">
+        <field name="name">Buscar Factura Relacionada (seleccionados)</field>
+        <field name="model_id" ref="model_account_edi_downloaded_xml_sat"/>
+        <field name="binding_model_id" ref="model_account_edi_downloaded_xml_sat"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_search_related_invoice()</field>
+        <field name="binding_type">action</field>
+    </record>
+
+    <!-- Acción de servidor: Recalcular currency_id para XML seleccionados -->
+    <record id="action_recompute_currency_selected_xml" model="ir.actions.server">
+        <field name="name">🔄 Recalcular Moneda</field>
+        <field name="model_id" ref="model_account_edi_downloaded_xml_sat"/>
+        <field name="binding_model_id" ref="model_account_edi_downloaded_xml_sat"/>
+        <field name="state">code</field>
+        <field name="code">
+for record in records:
+    record._compute_currency_id()
+        </field>
+        <field name="binding_type">action</field>
+    </record></odoo>

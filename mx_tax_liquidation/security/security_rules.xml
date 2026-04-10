@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- ============================================================ -->
+        <!-- REGLAS MULTIEMPRESA — mx.tax.settlement                       -->
+        <!-- ============================================================ -->
+        <record id="rule_tax_settlement_company" model="ir.rule">
+            <field name="name">Liquidación Fiscal: Aislamiento por empresa</field>
+            <field name="model_id" ref="model_mx_tax_settlement"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">
+                [('company_id', 'in', company_ids)]
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- REGLAS MULTIEMPRESA — mx.tax.settlement.line                  -->
+        <!-- ============================================================ -->
+        <record id="rule_tax_settlement_line_company" model="ir.rule">
+            <field name="name">Línea de Liquidación: Aislamiento por empresa</field>
+            <field name="model_id" ref="model_mx_tax_settlement_line"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">
+                [('company_id', 'in', company_ids)]
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- REGLAS MULTIEMPRESA — mx.tax.settlement.payment               -->
+        <!-- ============================================================ -->
+        <record id="rule_tax_settlement_payment_company" model="ir.rule">
+            <field name="name">Pago SAT: Aislamiento por empresa</field>
+            <field name="model_id" ref="model_mx_tax_settlement_payment"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">
+                [('company_id', 'in', company_ids)]
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- REGLAS MULTIEMPRESA — mx.tax.settlement.config                -->
+        <!-- El rol 'config' necesita ver todas las empresas para poder    -->
+        <!-- configurar el módulo en entornos multicompañía. La restricción-->
+        <!-- solo aplica a roles de operación (user, manager, auditor).    -->
+        <!-- ============================================================ -->
+        <record id="rule_tax_settlement_config_company" model="ir.rule">
+            <field name="name">Config Liquidación Fiscal: Aislamiento por empresa (operadores)</field>
+            <field name="model_id" ref="model_mx_tax_settlement_config"/>
+            <field name="groups" eval="[
+                (4, ref('mx_tax_liquidation.group_tax_settlement_user')),
+                (4, ref('mx_tax_liquidation.group_tax_settlement_manager')),
+                (4, ref('mx_tax_liquidation.group_tax_settlement_auditor')),
+            ]"/>
+            <field name="domain_force">
+                [('company_id', 'in', company_ids)]
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- REGLAS MULTIEMPRESA — mx.tax.settlement.log                   -->
+        <!-- ============================================================ -->
+        <record id="rule_tax_settlement_log_company" model="ir.rule">
+            <field name="name">Bitácora Auditoría: Aislamiento por empresa</field>
+            <field name="model_id" ref="model_mx_tax_settlement_log"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">
+                [('company_id', 'in', company_ids)]
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ============================================================ -->
+        <!-- VISTA FORM — Concepto Fiscal                                   -->
+        <!-- ============================================================ -->
+        <record id="view_mx_tax_concept_form" model="ir.ui.view">
+            <field name="name">mx.tax.concept.form</field>
+            <field name="model">mx.tax.concept</field>
+            <field name="arch" type="xml">
+                <form string="Concepto Fiscal SAT">
+                    <sheet>
+                        <widget name="web_ribbon" title="Archivado" bg_color="text-bg-danger"
+                                invisible="active"/>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Nombre del concepto..."/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group string="Identificación">
+                                <field name="code"/>
+                                <field name="sequence"/>
+                                <field name="active" widget="boolean_toggle"/>
+                            </group>
+                            <group string="Clasificación">
+                                <field name="tax_type"/>
+                                <field name="nature"/>
+                                <field name="requires_reclassification" widget="boolean_toggle"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="description" placeholder="Descripción detallada del concepto fiscal..."/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- VISTA LIST — Conceptos Fiscales                               -->
+        <!-- ============================================================ -->
+        <record id="view_mx_tax_concept_list" model="ir.ui.view">
+            <field name="name">mx.tax.concept.list</field>
+            <field name="model">mx.tax.concept</field>
+            <field name="arch" type="xml">
+                <list string="Conceptos Fiscales SAT" decoration-muted="active == False">
+                    <field name="sequence" widget="handle"/>
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="tax_type"/>
+                    <field name="nature"/>
+                    <field name="requires_reclassification"/>
+                    <field name="active" column_invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- ACCIÓN — Conceptos Fiscales                                   -->
+        <!-- ============================================================ -->
+        <record id="action_mx_tax_concept" model="ir.actions.act_window">
+            <field name="name">Conceptos Fiscales SAT</field>
+            <field name="res_model">mx.tax.concept</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'active_test': False}</field>
+        </record>
+    </data>
+</odoo>

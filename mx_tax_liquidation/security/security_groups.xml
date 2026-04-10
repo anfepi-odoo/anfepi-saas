@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ============================================================ -->
+        <!-- CATEGORÍA                                                      -->
+        <!-- ============================================================ -->
+        <record id="module_category_mx_tax_liquidation" model="ir.module.category">
+            <field name="name">Liquidación Fiscal MX</field>
+            <field name="description">Gestión de obligaciones fiscales mexicanas.</field>
+            <field name="sequence">100</field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- GRUPO: USUARIO                                                 -->
+        <!-- ============================================================ -->
+        <record id="group_tax_settlement_user" model="res.groups">
+            <field name="name">Usuario Liquidación Fiscal MX</field>
+            <field name="implied_ids" eval="[(4, ref('account.group_account_invoice'))]"/>
+            <field name="comment">
+                Puede visualizar liquidaciones y registrar pagos al SAT.
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- GRUPO: GESTOR                                                  -->
+        <!-- ============================================================ -->
+        <record id="group_tax_settlement_manager" model="res.groups">
+            <field name="name">Gestor Liquidación Fiscal MX</field>
+            <field name="implied_ids" eval="[(4, ref('group_tax_settlement_user'))]"/>
+            <field name="comment">
+                Puede crear, calcular, confirmar y cancelar liquidaciones fiscales.
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- GRUPO: AUDITOR                                                 -->
+        <!-- ============================================================ -->
+        <record id="group_tax_settlement_auditor" model="res.groups">
+            <field name="name">Auditor Liquidación Fiscal MX</field>
+            <field name="implied_ids" eval="[(4, ref('group_tax_settlement_user'))]"/>
+            <field name="comment">
+                Solo lectura con acceso a bitácora de auditoría completa y exportación.
+            </field>
+        </record>
+
+        <!-- ============================================================ -->
+        <!-- GRUPO: CONFIGURACIÓN                                           -->
+        <!-- ============================================================ -->
+        <record id="group_tax_settlement_config" model="res.groups">
+            <field name="name">Configuración Liquidación Fiscal MX</field>
+            <field name="implied_ids" eval="[(4, ref('group_tax_settlement_manager'))]"/>
+            <field name="comment">
+                Puede configurar cuentas contables, conceptos fiscales y parámetros del módulo.
+            </field>
+        </record>
+
+        <!-- En Odoo 19 'users' fue eliminado de res.groups.
+             La asignación de grupos a usuarios se hace en el registro res.users. -->
+        <record id="base.user_root" model="res.users">
+            <field name="groups_id" eval="[(4, ref('group_tax_settlement_config'))]"/>
+        </record>
+        <record id="base.user_admin" model="res.users">
+            <field name="groups_id" eval="[(4, ref('group_tax_settlement_config'))]"/>
+        </record>
+    </data>
+</odoo>

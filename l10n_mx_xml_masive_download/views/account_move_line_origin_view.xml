@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================================================ -->
+    <!-- NUEVA VISTA: Columna "Documento Origen" en XMLs Descargados                 -->
+    <!-- 100% SEGURA - Solo agrega columnas, NO modifica funcionalidad existente     -->
+    <!-- ============================================================================ -->
+    
+    <record id="view_account_edi_downloaded_xml_sat_list_origin" model="ir.ui.view">
+        <field name="name">account.edi.downloaded.xml.sat.list.origin</field>
+        <field name="model">account.edi.downloaded.xml.sat</field>
+        <field name="inherit_id" ref="l10n_mx_xml_masive_download.view_account_edi_downloaded_xml_sat_list"/>
+        <field name="arch" type="xml">
+            <!-- Agregar columna "Documento Origen" después de invoice_id -->
+            <xpath expr="//field[@name='invoice_id']" position="after">
+                <field name="origin_document_name" 
+                       string="Documento Origen" 
+                       optional="hide"
+                       decoration-success="origin_document_name"
+                       decoration-muted="not origin_document_name"/>
+            </xpath>
+        </field>
+    </record>
+    
+    <!-- Agregar campos y filtros para búsqueda por documento origen -->
+    <record id="view_account_edi_downloaded_xml_sat_search_origin" model="ir.ui.view">
+        <field name="name">account.edi.downloaded.xml.sat.search.origin</field>
+        <field name="model">account.edi.downloaded.xml.sat</field>
+        <field name="inherit_id" ref="l10n_mx_xml_masive_download.view_account_edi_downloaded_xml_sat_list_search"/>
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="origin_document_name"/>
+                <field name="origin_document_type"/>
+                <filter string="Con Documento Origen" 
+                        name="with_origin" 
+                        domain="[('origin_document_name', '!=', False)]"/>
+                <filter string="Sin Documento Origen" 
+                        name="without_origin" 
+                        domain="[('origin_document_name', '=', False)]"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>
