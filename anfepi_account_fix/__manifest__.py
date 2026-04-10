@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'ANFEPI - Restaurar Cuenta ISR A Favor',
-    'version': '19.0.1.1.0',
+    'version': '18.0.1.0.0',
     'category': 'Accounting',
     'summary': 'Restaura la cuenta contable 113.02.01 ISR A Favor eliminada durante la migración',
     'description': """
         Este módulo restaura la cuenta contable 113.02.01 ISR A Favor
-        que desapareció durante la migración a Odoo 16.
-        
+        que desapareció durante la migración a Odoo 18.
+
         La cuenta se crea automáticamente para todas las compañías activas
         que utilicen la localización mexicana (l10n_mx) y no tengan
         ya definida esa cuenta.

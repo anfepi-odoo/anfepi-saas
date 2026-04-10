@@ -6,8 +6,7 @@ _logger = logging.getLogger(__name__)
 
 def migrate(cr, version):
     """
-    Fix DIOT tax_tag_invert antes de que _process_end del módulo account
-    (saas~18.5.1.4/pre-remove-tax-tag-invert.py) ejecute su check.
+    Fix DIOT tax_tag_invert durante upgrade del módulo en Odoo 18.
 
     Este script corre durante el upgrade del módulo (cuando ya estaba instalado).
     El post_init_hook cubre el caso de instalación nueva.
@@ -25,7 +24,7 @@ def migrate(cr, version):
           )
     """)
     _logger.info(
-        'anfepi_account_fix migration 19.0.1.0.0: '
+        'anfepi_account_fix migration 18.0.1.0.0: '
         'DIOT tax_tag_invert fix aplicado (%d filas)',
         cr.rowcount,
     )
