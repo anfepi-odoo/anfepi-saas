@@ -19,7 +19,7 @@ def migrate(cr, version):
     fixed = 0
     for account in accounts:
         if account.name != ACCOUNT_NAME:
-            _logger.warning(
+            _logger.info(
                 'anfepi_account_fix 18.0.1.2.0: cuenta %s en compañía "%s" '
                 'tenía nombre "%s" — renombrando a "%s".',
                 ACCOUNT_CODE, account.company_ids[:1].name,
@@ -28,7 +28,7 @@ def migrate(cr, version):
             account.write({'name': ACCOUNT_NAME})
             fixed += 1
     if fixed:
-        _logger.warning(
+        _logger.info(
             'anfepi_account_fix 18.0.1.2.0: %d cuenta(s) renombradas a "%s".',
             fixed, ACCOUNT_NAME,
         )

@@ -17,7 +17,7 @@ def migrate(cr, version):
     accounts = env['account.account'].search([('code', '=', ACCOUNT_CODE)])
     for account in accounts:
         if account.name != ACCOUNT_NAME:
-            _logger.warning(
+            _logger.info(
                 'anfepi_account_fix 18.0.1.1.0: cuenta %s en compañía "%s" '
                 'tenía nombre "%s" — renombrando a "%s".',
                 ACCOUNT_CODE, account.company_ids[:1].name,
