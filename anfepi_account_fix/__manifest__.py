@@ -16,13 +16,7 @@
     'depends': [
         'account',
         'l10n_mx',
-        'partner_autocomplete',
     ],
-    'assets': {
-        'web.assets_web': [
-            ('remove', '/partner_autocomplete/static/lib/jsvat.js'),
-        ],
-    },
     'data': [],
     'post_init_hook': 'post_init_hook',
     'installable': True,
