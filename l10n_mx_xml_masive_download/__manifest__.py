@@ -3,7 +3,7 @@
 
 {
     'name': 'XML Masive Download',
-    'version': '19.0.31.0',
+    'version': '18.0.31.0',
     'category': 'Hidden',
     'author':'ANFEPI: Roberto Requejo Jiménez y Roberto Requejo Fernández',
     'description': """

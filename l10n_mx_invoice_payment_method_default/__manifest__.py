@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'MX: Heredar y Asignar Forma de Pago Correcta en Facturas',
-    'version': '19.0.1.3.2',
+    'version': '18.0.1.3.2',
     'category': 'Localization/Mexico',
-    'summary': 'Hereda forma de pago del cliente y asigna default según policy PUE/PPD (v19 fix)',
+    'summary': 'Hereda forma de pago del cliente y asigna default según policy PUE/PPD (v18 fix)',
     'description': '''
         PROBLEMA RESUELTO:
         ==================
