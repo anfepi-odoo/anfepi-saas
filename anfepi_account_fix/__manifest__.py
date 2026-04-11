@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'ANFEPI - Restaurar Cuenta ISR A Favor',
-    'version': '18.0.1.4.0',
+    'version': '18.0.1.5.0',
     'category': 'Accounting',
     'summary': 'Restaura la cuenta contable 113.02.01 ISR A Favor eliminada durante la migración',
     'description': """
@@ -17,6 +17,11 @@
         'account',
         'l10n_mx',
     ],
+    'assets': {
+        'web.assets_web': [
+            'anfepi_account_fix/static/src/js/jsvat_patch.js',
+        ],
+    },
     'data': [],
     'post_init_hook': 'post_init_hook',
     'installable': True,
