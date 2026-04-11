@@ -85,11 +85,20 @@ def _create_or_get_isr_account(env, company):
     ], limit=1)
 
     if existing:
-        _logger.info(
-            'anfepi_account_fix: La cuenta %s ya existe para la compañía '
-            '"%s" (id=%d). Se usará para reparar líneas huérfanas.',
-            ACCOUNT_CODE, company.name, existing.id
-        )
+        if existing.name != ACCOUNT_NAME:
+            old_name = existing.name
+            existing.with_company(company).write({'name': ACCOUNT_NAME})
+            _logger.warning(
+                'anfepi_account_fix: Cuenta %s en compañía "%s" tenía nombre '
+                '"%s" — renombrada a "%s".',
+                ACCOUNT_CODE, company.name, old_name, ACCOUNT_NAME
+            )
+        else:
+            _logger.info(
+                'anfepi_account_fix: La cuenta %s ya existe para la compañía '
+                '"%s" (id=%d). Se usará para reparar líneas huérfanas.',
+                ACCOUNT_CODE, company.name, existing.id
+            )
         return existing
 
     # En v18+ group_id es computed automáticamente por prefijo de código;
