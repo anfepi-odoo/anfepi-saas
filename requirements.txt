@@ -1,4 +1,3 @@
 pdf417gen
 cfdiclient
 pillow
-git commit --allow-empty -m "Trigger update"; git push
