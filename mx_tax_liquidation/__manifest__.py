@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'MX Tax Liquidation — Liquidación de Obligaciones Fiscales',
-    'version': '18.0.1.0.0',
+    'version': '19.0.1.0.0',
     'category': 'Accounting/Mexico',
     'summary': 'Gestión mensual del pago de obligaciones fiscales mexicanas: ISR, IVA, retenciones.',
     'description': """
