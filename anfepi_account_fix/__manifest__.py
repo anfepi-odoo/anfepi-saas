@@ -22,7 +22,9 @@
             'anfepi_account_fix/static/src/js/jsvat_patch.js',
         ],
     },
-    'data': [],
+    'data': [
+        'data/disable_crons.xml',
+    ],
     'post_init_hook': 'post_init_hook',
     'installable': True,
     'auto_install': False,
